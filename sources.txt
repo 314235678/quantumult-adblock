@@ -1,0 +1,16 @@
+# ============================================================
+# 上游合并源 (sources.txt)
+# build.py 在生成 adblock.list 时会逐个抓取并自动转换为 Quantumult X 规则。
+# 抓取失败的行会被跳过，不影响本地 custom.txt 生成的规则。
+# 每行一个 URL；# 开头为注释。
+# ============================================================
+
+# AdGuard 基础广告服务器清单（覆盖面广：网页 + App 横幅/SDK 广告）
+https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt
+
+# Apple 广告/追踪专用清单（与本地 custom.txt 互补，质量高）
+https://raw.githubusercontent.com/froggeric/DNS-blocklists/main/NoAppleAds
+
+# 以下为超大型列表（约 29 万条），覆盖极广但会显著拖慢 Quantumult X，
+# 仅在你的设备性能足够、且追求"极限全面"时取消注释启用：
+# https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list

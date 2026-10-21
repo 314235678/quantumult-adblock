@@ -1,0 +1,221 @@
+# ============================================================
+# Quantumult X 去广告规则 - 自定义域名层 (custom.txt)
+# 说明：
+#   - 每行一个域名（自动按 HOST-SUFFIX 拒绝）；行首 *. 会被忽略
+#   - # 开头为注释/分类标题
+#   - 已刻意剔除会破坏 App 核心功能的域名（如微信/QQ 推送长连接、
+#     Facebook/Twitter/Telegram 主接口、图床、登录接口等）
+#   - build.py 会把它与 sources.txt 里的上游清单合并去重，生成 adblock.list
+# ============================================================
+
+# ===================== Apple 广告 / 追踪 =====================
+advertising.apple.com
+iad.apple.com
+iadsdk.apple.com
+api-adservices.apple.com
+ca.iadsdk.apple.com
+news.iadsdk.apple.com
+cf.iadsdk.apple.com
+cs.iadsdk.apple.com
+su.iadsdk.apple.com
+tr.iadsdk.apple.com
+ut.iadsdk.apple.com
+iadcontent.apple.com
+iadctest.qwapi.com
+iadmoo.apple.com
+iadworkbench.apple.com
+launch.apple.com
+securemetrics.apple.com
+books-analytics-events.apple.com
+axm-telemetry.apple.com
+weather-analytics-events.apple.com
+notes-analytics-events.apple.com
+metrics.apple.com
+metrics.mzstatic.com
+metrics.icloud.com
+qwapi.com
+comscoreresearch.com
+apple.comscoreresearch.com
+advp.apple.com
+ls.advp.apple.com
+proxy.advp.apple.com
+webproxy.advp.apple.com
+iad-apple.com
+webproxy-advp.iad-apple.com
+
+# ===================== Google 广告 / 分析 =====================
+doubleclick.net
+googleads.g.doubleclick.net
+adservice.google.com
+adservices.google.com
+pagead2.googlesyndication.com
+googlesyndication.com
+googleadservices.com
+admob.com
+google-analytics.com
+ssl.google-analytics.com
+analytics.google.com
+googletagmanager.com
+googletagservices.com
+ad.doubleclick.net
+static.doubleclick.net
+stats.g.doubleclick.net
+app-measurement.com
+firebaseio.com
+crashlytics.com
+settings.crashlytics.com
+googleoptimize.com
+
+# ===================== Meta (Facebook/Instagram/WhatsApp) =====================
+# 仅拦截可分离的追踪/广告域名；graph.facebook.com(登录)、fbcdn(图床) 不拦
+connect.facebook.net
+pixel.facebook.com
+an.facebook.com
+edge-quic.facebook.net
+analytics.instagram.com
+lookalytics.com
+
+# ===================== X / Twitter =====================
+ads-twitter.com
+analytics.twitter.com
+ads-api.twitter.com
+
+# ===================== ByteDance 抖音/TikTok/穿山甲(Pangle) =====================
+pangle.io
+pangle-platform.com
+byteoversea.com
+pangolin-sdk.douyin.com
+ad.douyin.com
+ads.douyin.com
+log.douyin.com
+monitor.douyin.com
+ad.tiktok.com
+ads.tiktok.com
+analytics.tiktok.com
+business-api.tiktok.com
+log.snssdk.com
+monitor.snssdk.com
+
+# ===================== Tencent 微信/QQ/广点通(GDT) =====================
+# 不拦：pingma.qq.com(推送长连接)、mmbiz.com(公众号)、qpic/qlogo(图床)、wup.imqq.com(消息)
+gdt.qq.com
+ads.qq.com
+ad.qq.com
+qad.qq.com
+tadm.qq.com
+gx.qq.com
+tdbank.qq.com
+isdspeed.qq.com
+analytics.weixin.qq.com
+
+# ===================== 百度 广告 / 分析 =====================
+cpro.baidu.com
+cpro2.baidu.com
+ad.baidu.com
+adm.baidu.com
+pos.baidu.com
+union.baidu.com
+mobads.baidu.com
+eclick.baidu.com
+nsclick.baidu.com
+click.baidu.com
+hm.baidu.com
+
+# ===================== 阿里巴巴/淘宝/UC/神马 广告 =====================
+tanx.com
+ad.alimama.com
+afp.alimama.com
+click.alimama.com
+m.alimama.cn
+adservice.aliyun.com
+re.taobao.com
+ad.taobao.com
+
+# ===================== 360 / 其他国内常见广告 =====================
+ad.360.cn
+adsafe.360.cn
+ad.youku.com
+
+# ===================== 通用移动广告 SDK =====================
+unityads.unity3d.com
+ads.unity3d.com
+applovin.com
+appnexus.com
+adnxs.com
+rubiconproject.com
+pubmatic.com
+criteo.com
+casalemedia.com
+openx.net
+scorecardresearch.com
+doubleverify.com
+indexexchange.com
+spotx.tv
+freewheel.tv
+conviva.com
+mintegral.com
+ironsrc.com
+ironsource.com
+chartboost.com
+vungle.com
+adcolony.com
+inmobi.com
+startapp.com
+mobvista.com
+mopub.com
+smaato.com
+mobfox.com
+inner-active.com
+tapjoy.com
+fyber.com
+adview.com
+youmi.net
+domob.cn
+duomeng.cn
+chukong.com
+mobvista.com
+
+# ===================== 追踪 / 分析 SDK =====================
+appsflyer.com
+adjust.com
+branch.io
+amplitude.com
+mixpanel.com
+segment.io
+umeng.com
+log.umeng.com
+sensorsdata.cn
+talkingdata.com
+countly.net
+hotjar.com
+fullstory.com
+bugly.qq.com
+firebase-settings.crashlytics.com
+plausible.io
+metrica.yandex.com
+
+# ===================== 其他常见广告/追踪 =====================
+moatads.com
+eadsr.com
+serving-sys.com
+bluekai.com
+criteo-sync.com
+demdex.net
+krxd.net
+rlcdn.com
+exelator.com
+agkn.com
+btrll.com
+turn.com
+liadm.com
+adsrvr.org
+advertising.com
+mathtag.com
+pixel.mathtag.com
+tagsrvr.com
+ymphony.com
+adform.net
+smartadserver.com
+criteo.com
+loopme.com
+smaato.com
