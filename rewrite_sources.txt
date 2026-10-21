@@ -1,0 +1,22 @@
+# 墨鱼(ddgksf2013) 应用内去广告重写规则源（Quantumult X 格式）
+# 由 build.py 每日抓取并合并为 rewrite.list（单条订阅链接）
+# 注意：这些规则依赖 HTTPS 解密，需在 QX 开启 MitM 并信任证书；
+#       文件内已自带 hostname 声明，QX 订阅后会自动加入 MitM。
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/Applet.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeChat.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeiboAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/YoutubeAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/RedditAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TieBaAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/NeteaseAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/Ximalaya.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/KeepAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/GoofishAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/SmzdmAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/XiaoYuZhouAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/MoJiWeatherAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/CainiaoAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/QiShuiMusicAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TaoPiaoPiaoAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/AmapAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/BingSimplify.conf

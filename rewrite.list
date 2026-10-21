@@ -1,0 +1,944 @@
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/Applet.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        微信小程序去除广告[墨鱼版]
+// @Download          进入小程序，搜索对应名称即可
+// @Author            ddgksf2013
+// @TgChannel         https://t.me/ddgksf2021
+// @Feedback          https://t.me/ddgksf2013_bot
+// @WechatID          墨鱼手记
+// @UpdateTime        2023-09-13
+// @Function          去除广告、直接查看隐藏内容、净化弹窗
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @Suitable          自行观看"# > "注释内容
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/Applet.conf
+// ==/UserScript==
+
+# 此重写仅针对特定小程序去广告，无法去除小程序5s开屏广告（建议微信开启青少年模式，即可去除小程序开屏及小程序内弹窗）
+
+# 搜罗好货、小野分享、天泽后花园、黑科技软件、酸鸡汤,老爷花苑,御花园、森茂雅苑、小纸箱助手、free 黑科技
+# 科技窝、APP基地、AShare、不完全指北、森茂小苑、电视盒子君、公子黑科技、世颜说、搞机师兄、火箭软件库
+# 天书乱谈、老胡群英会、天泽百宝箱、老鬼黑科技、黑科技软件源、天书X乱谈、图层黑科技、掌上公交、顺丰速运
+# 便利蜂、公众号图文广告、
+
+
+hostname = api.blibee.com, ucmp.sf-express.com, www.bbkj.work, wx.wxqqurl.cn, wp3.lobdol.cn, awg.enmonster.com, mp.weixin.qq.com, wx.mygolbs.com, jabi.coding.net, api.bspapp.com, 3dd0be8a-54fe-43ff-a0e7-f670c4f20432.bspapp.com, *.tslt.xyz, g.syshhc.top, c.jxjt888.top, www.laoguikeji.cn, qj.bpojie.com, b.tslt.xyz, m.xgjyouhui.com, www.freeheikeji.cn, xcx.xianbaow.com, *.smkj33.top, *.ddly666.top, hkj178.com, a.jxjt888.top, lysl2020.com, www.i3zh.com, iosoi.cn, jabi.coding.net, jt.jxjt888.top, gjsx.vip, d.syshhc.top, gz.gongzijx.com, tvapp.guilaile.cn, www.benbenfx.xyz, 4thdimension.top, api.bspapp.com, tan.ipnas.ltd
+
+
+
+# > 小程序_便利蜂@ddgksf2013
+^https?:\/\/api\.blibee\.com\/cvsnotify-api\/cvs\/notify\/app\/banner\/v\d+$ url reject-200
+# > 小程序_顺丰速运@ddgksf2013
+^https?:\/\/ucmp\.sf-express\.com\/proxy\/operation-platform\/info-flow-adver\/query$ url reject-200
+# > 公众号_图文去广告@ddgksf2013
+^(http|https):\/\/mp\.weixin\.qq\.com\/mp\/getappmsgad url response-body advertisement response-body ddgksf2013
+# > 小程序_掌上公交@ddgksf2013
+^https?:\/\/wx\.mygolbs\.com\/WxBusServer\/ApiData\.do url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/zhangshanggongjiao.js
+# > 小程序_去广告@ddgksf2013
+^(https?://)?([a-zA-Z0-9]+(-[a-zA-Z0-9]+)*\.)+[a-zA-Z]{2,}(:\d+)?/wp-json/[a-zA-Z0-9_-]+/(mp\/)?v\d/posts url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/applet.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeChat.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        微信公众号去广告[已失效]
+// @Author            @ddgksf2013
+// @TgChannel         https://t.me/ddgksf2021
+// @Function          Block AD
+// @ScriptTime        2024-04-21
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/WeChat.conf
+// ==/UserScript==
+
+
+hostname = mp.weixin.qq.com
+
+# > 微信公众号去广告[已失效][不包含公众号信息流AD、朋友圈AD][推荐开启青少年模式可去除朋友圈AD]
+^https?:\/\/mp\.weixin\.qq\.com\/mp\/getappmsgad url response-body advertisement response-body ddgksf2013
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeiboAds.conf (qx_format=True) =====
+// ==UserScript==
+// @ScriptName        微博&微博国际版净化[墨鱼版]
+// @Author            @ddgksf2013
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-09-16
+// @Attention         微博、微博国际版净化，现已二合一，使用中若有问题请发邮件！
+// @Attention         使用时请注意关闭QuantumultX的[兼容性增强]开关，否则无法去除微博广告
+// @Suitable          自行观看“# > ”注释内容
+// @Contributors      @zmqcherish
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V2.0.114
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/WeiboAds.conf
+// ==/UserScript==
+
+# 𝐂𝐮𝐭𝐭𝐥𝐞𝐟𝐢𝐬𝐡 𝐒𝐞𝐥𝐟-𝐮𝐬𝐞 𝐑𝐞𝐰𝐫𝐢𝐭𝐞 𝐂𝐨𝐧𝐟𝐢𝐠𝐮𝐫𝐚𝐭𝐢𝐨𝐧 𝐂𝐡𝐚𝐧𝐠𝐞𝐥𝐨𝐠 𝐂𝐫𝐞𝐚𝐭𝐞𝐝 𝐛𝐲 𝐝𝐝𝐠𝐤𝐬𝐟𝟐𝟎𝟏𝟑 𝐚𝐧𝐝 𝐳𝐦𝐪𝐜𝐡𝐞𝐫𝐢𝐬𝐡
+# [+]202X-XX-XX  01、删除首页(tab1)流和超话中的广告、热推删除视频号(tab2)流中的广告，删除发现页(tab3)轮播广告图
+# [+]202X-XX-XX  02、删除个人页(tab5)中的创作者中心下方的轮播图、为你推荐、用户任务和VIP一栏（可配置）
+# [+]202X-XX-XX  03、删除微博详情页的广告、相关推荐、微博主好物种草和关注博主模块（可配置），删除微博开屏广告 | 参考@yichahucha
+# [+]202X-XX-XX  04、删除tab2菜单中的虚假通知，删除tab1顶部的签到和直播（可配置），删除微博详情页菜单栏的新鲜事头像挂件等（可配置）
+# [+]202X-XX-XX  05、删除微博详情页评论区相关内容（可配置，默认关闭），删除微博详情页评论区推荐内容（可配置，默认打开）
+# [+]202X-XX-XX  06、删除超话中可能感兴趣的超话、超话中的好友、超话好友关注、用户页可能感兴趣的人（可配置，默认关闭）
+# [+]202X-XX-XX  07、删除搜索结果页广告，将个人主页关注按钮默认值由推荐改为关注的人
+# [+]202X-XX-XX  08、自定义个人主页图标（可配置，默认关闭）效果图，关闭自动播放下一个视频（可配置，默认关闭）
+# [+]202X-XX-XX  09、删除微博详情页打赏模块（可配置，默认关闭），自定义底部tab图标（可配置，默认关闭）效果图
+# [+]202X-XX-XX  10、已删除移除tab5新任务通知，原样式，删除绿洲模块（可配置，默认关闭）
+# [+]202X-XX-XX  11、待定自定义开屏图片/视频。如有需求，可以考虑开发，删除个人页让“红包飞模块”
+# [+]2022-03-12  12、新增屏蔽用户功能，如果有不得已需要关注的人（比如某些抽奖关注），但是又不想看TA的内容可以使用此配置。
+# [+]2022-05-22  13、重新删除发现页(tab3)轮播广告图，需要配置weibo_config.js -> removeSearchWindow为true，其实轮播中有些不是广告，一起杀
+# [+]2022-07-12  14、删除消息页动态流的广告
+# [+]2022-08-22  15、删除超话tab页无关元素（可配置）
+# [+]2022-08-23  16、删除微博详情页超话新帖和新用户相关提示
+# [+]2022-09-02  17、删除初次打开搜索页的轮播图
+# [+]2022-09-12  18、修复超话无法签到bug
+# [+]2022-10-11  19、移除首页新版广告
+# [+]2022-10-24  20、移除用户页新版广告
+# [+]2022-10-24  XX、🍁以上1-20条为@zmqcherish所写，下面21条开始为@墨鱼所写🍁
+# [+]2022-12-14  21、将微博国际版去广告与微博去广告二合一，删除微博发现页的轮播图，add key removeSearchWindow for true
+# [+]2022-12-15  22、更换微博国际版去广告的search_topic
+# [+]2022-12-15  23、微博国际版去广告不再采用单一reject方式，利用脚本去广告
+# [+]2022-12-15  24、去除微博我的页面“绿荫总动员”条幅，去除微博搜索框填词
+# [+]2022-12-15  25、修复微博热搜界面“要闻”与“同城”无法打开的bug
+# [+]2022-12-15  26、去除我的、热搜、文娱列表广告内容
+# [+]2022-12-16  27、请手动添加后面的分流至本地 host, sdkapp.uve.weibo.com, direct
+# [+]2022-12-16  28、删除主页顶部“#记录周五的开心时刻#”，去除搜索页面“实况热聊”栏以及group栏
+# [+]2022-12-16  29、删除微博评论详情页面最底部的“已过滤不当言论，部分评论暂不展示”等文字
+# [-]2022-12-17  30、脚本weibo_json.js已解除限制，其它工具诸如surge、Loon、小火箭亦可使用
+# [+]2022-12-18  31、优化超话tab看帖页面，保留搜索(去除自动填充内容)及感兴趣的超话以及去除一些无关group和card
+# [+]2022-12-20  32、删除超话搜索栏目下方的“可能感兴趣”、“热门超话”、“影视超话”、“游戏超话”等card
+# [+]2022-12-21  33、去除搜索页面tab中热搜下面一排圆圈图标内容
+# [+]2022-12-23  34、屏蔽hot_hours_spotlight请求
+# [+]2022-12-24  35、修复主页浏览动态微博时广告图片的空白占位问题，修复每日首次打开SearchTab页面广告轮播失效问题
+# [+]2022-12-24  36、删除发现页下拉刷新时的背景广告图片，瞬间清爽
+# [+]2022-12-24  37、删除微博短视频流中的广告，让你无广告享受刷短视频的快感
+# [+]2022-12-25  38、删除搜索页面热搜顶部偶尔出现的HotSearchPush
+# [+]2022-12-27  39、删除微博用户页“可能感兴趣的人”内容
+# [+]2022-12-29  40、删除微博信息流中商品橱窗内容（并未将整个CARD一起删除）
+# [+]2023-01-01  41、删除微博首页顶部感兴趣的人group推荐，并兼容微博国际版
+# [+]2023-01-03  42、去除微博国际版热搜列表的置顶内容
+# [+]2023-01-05  43、添加屏蔽sdkconfig请求及应用内弹窗广告请求
+# [+]2023-01-06  44、去除微博我的页面中Myname后面的续费VIP_Icon内容
+# [+]2023-01-08  45、屏蔽发现页面顶部搜索框热词，将热词恢复为‘搜索’
+# [+]2023-01-16  46、去除微博短视频中的右下角的红包`转发有礼`与左下角商品推广`进店逛逛`等推广标志
+# [+]2023-01-18  47、屏蔽微博客户端首页左上角每日的弹窗tips
+# [+]2023-01-22  48、去除微博热搜对应某关键词下信息流中的遗留广告
+# [+]2023-01-24  49、去除微博底部超话栏表层浮icon及tips
+# [+]2023-02-03  50、解决微博用户置顶博文消失的bug，同时新增去除搜索框下方的猜你想搜条目
+# [+]2023-02-08  51、修复首页‘可能感兴趣的人’card失效bug，同时去除搜索页面中部比较窄的‘热门微博’字样的CARD，使信息流保持一致
+# [+]2023-02-09  52、自动删除我的页面除[超话社区]CARD以外的所有推广内容（再也不用手动移除），另外[超话社区]依然支持自主移除或添加到我的页面内
+# [+]2023-02-09  53、我的页面Card白名单新增[我的最近访问]，以方便群友，依然支持自主移除或添加
+# [+]2023-02-13  54、修复某些用户微博页面最近动态不显示的bug，增加微博视频detail处理
+# [+]2023-02-15  55、在有缓存的情况下，处理微博搜索框下的‘猜你想搜’栏目以及‘猜你想搜偏好设置’栏目[code not added]
+# [+]2023-02-16  56、处理部分用户每日首次打开微博的开屏广告请求[部分用户是指未将boot.biz.weibo.com域名添加黑名单]
+# [+]2023-02-18  57、修复微博在繁体字下评论区屏蔽用户推荐失效的问题
+# [+]2023-02-22  58、处理信息流中视频左上角的"红包派送中"Tag[code not added]
+# [+]2023-02-25  59、处理用户反馈的微博国际版‘微博会员’推广CARD
+# [+]2023-02-25  60、修改MITM写法，使小火箭工具能够MITM本重写的域名[后续新的重写配置也将注意此问题]
+# [+]2023-03-04  61、调整boot.biz.weibo.com屏蔽策略，缩短微博应用启动时间，提高用户使用体验[或在本地添加分流host,boot.biz.weibo.com,reject(Anti已包含)]
+# [+]2023-03-09  62、微博在未登录状态下，新增对首页[关注]与[热门]信息流广告的处理
+# [+]2023-03-31  63、修复微博开屏广告屏蔽失效的bug
+# [+]2023-04-02  64、去除微博超话[广场]tab页面顶部广告推送以及搜索框下方的“我的热搜”内容
+# [+]2023-04-11  65、移除视频20s预览的限制
+# [+]2023-04-15  66、修复超话个人页面无法打开的问题
+# [+]2023-04-16  67、针对用户反馈的开屏广告预加载问题[已有缓存的情况下]进行处理
+# [+]2023-04-16  68、针对用户反馈的微博国际版内容搜索不全问题进行处理
+# [+]2023-04-27  69、在已有缓存的情况下去除微博搜索框下方的'猜你想搜'、'我的热搜'、'猜你想搜偏好设置'等内容
+# [+]2023-05-19  70、新增屏蔽推荐关注用户的弹窗
+# [+]2023-06-02  71、修复微博发现页"微博热搜"Group丢失的问题
+# [+]2023-07-03  72、移除部分微博详情页面顶部的“30天内，博主已拉黑恶意评论用户...”等文字Tips
+# [+]2023-07-05  73、移除微博帖子下方的贴片广告[忘了更新日志，补上]
+# [+]2023-08-11  74、移除微博国际版趋势页下的热门影片，恢复方法，打开解析器重写后面添加#out=v_f即可
+# [+]2023-09-18  75、移除微博国际版帖子详情页下方的Ad—banner
+# [+]2023-09-28  76、移除微博首页顶部的homeExtend，例如华为Mate60，并添加一条微博去广告重写
+# [+]2024-01-05  77、移除微博搜索页面‘微博热搜CARD’下方的出框广告
+# [+]2024-01-15  78、头部添加说明：兼容性增强与微博去广告冲突，如果你需要去除微博广告，请关闭QX兼容性增强开关
+# [+]2024-01-25  79、修复微博搜索结果信息中广告失效问题[新版更改了items]
+# [+]2024-01-26  80、新增删除微博搜索页面的gallery广告[新版增加的]
+# [+]2024-04-22  81、去除微博搜索页面新增的推广，顺带修复搜索时用户列表为空的BUG
+# [+]2024-07-14  82、修复微博国际版热搜屏蔽失效问题及探索页面有推广问题
+# [+]2024-08-18  83、修复微博国际版新版热搜页空白问题及去除热搜页最底部的[实时上升热点，每分钟更新一次]Part
+# [+]2024-09-21  84、修改两条重写，便于GITHUBACTION生成的墨鱼去广告模块小火箭也能有效
+# [+]2024-10-03  85、修复微博国际版（最新版本）去广告后点击热搜词APP会奔溃的问题
+# [+]2024-10-30  86、采用另一种方式去除搜索页面中部的品牌商品推广
+# [+]2024-12-22  87、修复微博搜索页搜索框默认填词失效及搜索框猜你想搜问题
+# [+]2024-01-26  88、修复微博搜索页搜索框默认填词失效及首页顶部新出的直播及发现页中部的广告
+# [+]2024-08-08  88、去除首页顶部浮窗推广、首页信息流可能感兴趣的推广、删除侧栏的视频流
+# [+]2024-08-15  89、优化净化规则，去除了搜索页信息流及相关推广，仅保留微博热搜内容[热搜样式调整为单列]，同时屏蔽了“更多热搜”子页面的推广，让页面更干净
+# [+]2024-09-16  90、去除帖子详情页的“大家都在搜”、“博主好物种草”、“关注推荐”，评论区的广告推荐、AI总结
+
+
+hostname = api.weibo.*, *.api.weibo.*, mapi.weibo.*, *.uve.weibo.com, new.vip.weibo.cn, boot.biz.weibo.com
+
+
+# > 微博_分流@ddgksf2013
+host, sdkapp.uve.weibo.com, direct
+host, adstrategy.biz.weibo.com, reject
+
+# ======= 微博国内版 ======= #
+# > 微博_详情页及评论区@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/statuses\/container_detail url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_首页信息流可能感兴趣推广@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/statuses\/container_positive url reject-200
+# > 微博_首页顶部弹窗@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/push\/info url reject-200
+# > 微博_删除侧栏视频流@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/ug\/checkin\/stream url jsonjq-response-body '.items |= map(select(.category != "card"))'
+# > 微博_启动感兴趣弹窗@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/.*account\/recommend_interesttags url reject-dict
+# > 微博_首页顶部直播推荐Tab@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/.*\/media_homelist url reject-200
+# > 微博_搜索页默认填充词@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/.*finder\/searchbarchange url reject-200
+# > 微博_AD_Preload@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/ad\/preload url reject-dict
+# > 微博_首页顶部homeExtend@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/groups\/allgroups\/v\d url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_用户推荐弹窗@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/profile\/recommend_popuser url reject-dict
+# > 微博_开屏广告预加载处理@ddgksf2013
+^https?:\/\/boot.*weibo\.com\/v\d\/ad\/preload url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_未登陆状态下首页信息流处理@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/\w{5}\/(statuses_unread_hot_timeline|timeline) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_每日一次的开屏广告请求@ddgksf2013
+^https?:\/\/boot.*weibo\.com\/v\d\/ad\/realtime url reject-200
+# > 微博_视频信息处理@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/video\/tiny_stream_mid_detail url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_去除底部超话栏表层浮icon及tips@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/.*discovery_home_bottom_getdotinfo url reject-dict
+# > 微博_屏蔽首页左上角每日的弹窗tips@ddgksf2013
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d/push/daily url reject-dict
+# > 微博_屏蔽发现页面搜索框热词@ddgksf2013
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/\w{5}\/cardlist url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_应用内弹窗广告@ddgksf2013
+^https?:\/\/(preload-click|preload-impression)\.uve\.weibo\.com\/(interface\/wbpullad\/wbpullad_click\.php|wbapplua\/get_wbpullad_log\.lua) url reject
+# > 微博_屏蔽sdkconfig请求@ddgksf2013
+^https?:\/\/sdkapp\.uve\.weibo\.com\/interface\/sdk\/sdkconfig\.php url reject
+# > 微博_Spotlight@ddgksf2013
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/hot\/hours_spotlight url reject-dict
+# > 微博_自定义tab皮肤@zmqcherish
+^https://api.weibo.cn/2/!/client/light_skin url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_非会员设置tab皮肤@zmqcherish
+^https://new.vip.weibo.cn/littleskin/preview url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博_去广告以及去除各部分推广模块@zmqcherish,@ddgksf2013
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/(searchall|page\?|0flowpage) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/statuses/(unread_)?friends(/|_)timeline url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/groups/timeline url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/statuses/(container_timeline|unread_hot_timeline|extend|video_mixtimeline|unread_topic_timeline) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/profile/(me|container_timeline) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/video/(community_tab|remind_info|tiny_stream_video_list) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/search/(finder|container_timeline|container_discover) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/(checkin/show|\!/live/media_homelist|container/get_item) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/cardlist url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+
+
+# ======= 微博国际版 ======= #
+# > 微博国际版_开屏拦截@ddgksf2013
+host-suffix, api.touch-moblie.com, reject
+# > 微博国际版_帖子下方广告banner@ddgksf2013
+^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=open_app url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博国际版_趋势页热门影片@ddgksf2013
+^https?:\/\/api\.weibo\.cn\/\d\/cardlist\?v_f=.*Weibo_intl url reject-dict
+# > 微博国际版_屏蔽hotsearch@ddgksf2013
+^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php\?a=hot_search_users url reject-dict
+# > 微博国际版_屏蔽热推荐@ddgksf2013
+^https?:\/\/m?api\.weibo\.c(n|om)\/\d\/ad\/weibointl\? url reject-dict
+# > 微博国际版_屏蔽searching_info@shiro
+^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php.*a=get_searching_info url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_search_info.json
+# > 微博国际版_屏蔽search_topic@shiro
+^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php.*feed&a=search_topic url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_search_topic.json
+# > 微博国际版_屏蔽开屏广告@ddgksf2013 
+^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php.*get_coopen_ads url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博国际版_屏蔽sdkad@ddgksf2013
+^https?://(sdk|wb)app\.uve\.weibo\.com(/interface/sdk/sdkad.php|/wbapplua/wbpullad.lua) url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博国际版_趋势顶部Card去广告@ddgksf2013
+^https?:\/\/weibointl\.api\.weibo\.c(n|om)\/portal\.php.*a=trends url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博国际版_屏蔽用户VIP栏@ddgksf2013
+^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=user_center url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+# > 微博国际版_热搜处理@ddgksf2013
+^https?:\/\/weibointl\.api\.weibo\.cn\/portal\.php\?a=search_topic url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/weibo_json.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/YoutubeAds.conf (qx_format=False) =====
+########################################
+#应用名称：  Youtube Block AD
+#脚本作者：  @DivineEngine, @app2smile, @Maasea, @VirgilClyne
+#更新时间：  2025-03-09
+#使用说明：  用于视频、瀑布流、搜索、播放页、短视频及贴片广告、视频自动PIP、后台播放、自动翻译，不适用允许 UDP 转发的节点及 Premium
+#使用说明：  如果视频广告仍然存在，请在QuantumultX配置文件的[general]下添加 udp_drop_list=443
+#隐藏技能：  点开Youtube视频的瞬间，退出APP，即可无PIP播放，适合单纯听音频的用户
+#通知频道：  https://t.me/ddgksf2021
+#原始仓库：  https://github.com/DivineEngine
+#原始仓库：  https://github.com/Maasea
+#原始仓库：  https://github.com/app2smile
+#重写地址：  https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/YoutubeAds.conf
+########################################
+
+hostname = -redirector*.googlevideo.com,*.googlevideo.com,www.youtube.com,s.youtube.com,youtubei.googleapis.com
+
+# ======= 视频广告请求 ======= #
+(^https?:\/\/[\w-]+\.googlevideo\.com\/(?!dclk_video_ads).+?)&ctier=L(&.+?),ctier,(.+) url 302 $1$2$3
+^https?:\/\/[\w-]+\.googlevideo\.com\/(?!(dclk_video_ads|videoplayback\?)).+&oad url reject-200
+
+
+# ======= 视频PIP|后台播放|瀑布流|搜索页|播放页|短视频|贴片广告  ======= #
+^https?:\/\/youtubei\.googleapis\.com\/youtubei\/v1\/(browse|next|player|search|reel\/reel_watch_sequence|guide|account\/get_setting|get_watch) url script-response-body https://raw.githubusercontent.com/Maasea/sgmodule/refs/heads/master/Script/Youtube/youtube.response.js
+
+
+# ======= 通用广告请求 ======= #
+^https?:\/\/(www|s)\.youtube\.com\/api\/stats\/ads url reject-200
+^https?:\/\/(www|s)\.youtube\.com\/(pagead|ptracking) url reject-200
+^https?:\/\/s\.youtube\.com\/api\/stats\/qoe\?adcontext url reject-200
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/RedditAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        Reddit增强[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          去除Reddit信息流广告、帖子页面广告、帖子TreeAds、社区信息流广告，另去除信息流的NSFW图的遮罩，NSFW的帖子点击可直接查看图，伪装Premium，解锁会员图标
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-05-30
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.4
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/RedditAds.conf
+// ==/UserScript==
+
+
+
+
+hostname = gql-fed.reddit.com
+
+^https?:\/\/gql-fed\.reddit\.com\/$ url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/reddit.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TieBaAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        百度贴吧净化[墨鱼版]
+// @Author            @app2smile, @ddgksf2013
+// @Attention         QX(Build ≥ 848, Version > 1.5.2)
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-05-13
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.03
+// @RewriteURL        https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/TieBaAds.conf
+// ==/UserScript==
+
+
+
+hostname = tieba.baidu.com, tiebac.baidu.com
+
+IP-CIDR,180.76.76.200/32,reject
+
+# > 首页搜索|进吧搜索@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/c\/f\/search\/discover url jsonjq-response-body '.data.discover_list = []'
+# > 侧边抽屉栏@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/c\/f\/sidebar\/home url jsonjq-response-body 'del(.game_center, .tools, .vip_banner, .task_list)'
+# > 我的页面@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/c\/u\/user\/profile url jsonjq-response-body 'del(.duxiaoman, .namoaixud, .namoaixud_entry, .recom_naws_list, .duxiaoman_entry, .vip_banner) | .zone_info |= map(select(.type == "common_func" or .type == "auxiliary_func"))'
+# > 进吧Form@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/c\/f\/forum\/forumGuide url jsonjq-response-body '.hot_search = []'
+# > 搜索推荐@@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/mo\/q\/search\/startPage url jsonjq-response-body 'del(.data)'
+# > 页面中部广告@ddgksf2013
+^https?:\/\/tieba(c)?\.baidu\.com\/c\/f\/ad\/getFeedAd url reject-200
+# > 贴吧proto处理@app2smile
+^http(s:\/\/tiebac|:\/\/c\.tieba)\.baidu\.com\/c\/f\/(frs\/(page|threadlist|generalTabList)|pb\/page|excellent\/personalized)\?cmd url script-response-body https://raw.githubusercontent.com/app2smile/rules/master/js/tieba-proto.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/NeteaseAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        网易云音乐净化[墨鱼版]
+// @Author            @ddgksf2013
+// @ForHelp           压抑云之旅开始啦
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-03-19
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.33
+// @RewriteURL        https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/NeteaseAds.conf
+// ==/UserScript==
+
+
+// 墨鱼：默认不去除底部【漫游】，可在侧栏设置中手动关闭
+
+
+hostname = interface*.music.163.com
+
+
+# ======= 网易云框架区 ======= #
+# > 底部Tab@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/link\/home\/framework\/tab url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 发现页@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/link\/page\/discovery\/resource\/show url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 首推荐页@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/link\/page\/rcmd\/resource\/show url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 软件更新@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ios\/upgrade\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+
+
+# ======= 网易云搜索区 ======= #
+# > 搜索默认填词@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/default\/keyword\/list url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 猜你喜欢@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/rcmd\/keyword\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 搜索下方Chart@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/chart\/list url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 搜索Chart@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/chart\/detail url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 相关搜索@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/suggest\/keyword\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 特殊词@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/search\/specialkeyword\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+
+
+# ======= 网易云推广区 ======= #
+# > 广告加载@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/loading\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 广告实时@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/loading\/current url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 广告Get@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/ad\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 插入广告@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/link\/position\/show\/resource url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 歌单顶部广告@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/link\/scene\/show\/resource url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 活动推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/content\/activity\/music\/jar\/template\/list url reject-200
+# > 弹窗免费听歌@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vip\/cashier\/tspopup\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 启动领VIP弹窗@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/sp\/flow\/popup\/query url reject-200
+
+
+# ======= 网易云侧栏区 ======= #
+# > 侧栏账户@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vipnewcenter\/app\/resource\/newaccountpage url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 侧栏推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/side-bar\/mini-program\/music-service\/account url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 侧边VIP推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/delivery\/deliver url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 侧边浮层@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/delivery\/batch-deliver url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 优惠券@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/vipmall\/couponcfg\/get url reject-200
+# > 侧边兑换黑胶Tips@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/yunbei\/account\/entrance\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 侧边创作福利@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/creator\/musician\/reminder\/message\/get url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+
+
+# ======= 网易云歌曲区 ======= #
+# > 评论区插入推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/batch url script-response-body https://gist.githubusercontent.com/ddgksf2013/4f53b7c6083678df25fecc8ff68b52c4/raw/netease.adblock.js
+# > 活动推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/w?eapi\/(resource-exposure\/)?activity url reject-200
+# > 评论区插入推广@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/comment\/feed\/inserted\/resources url reject-200
+# > 购买实体专辑@ddgksf2013
+^https?:\/\/interface(\d)?\.music\.163\.com\/e?api\/resource-exposure\/config url reject-200
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/Ximalaya.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        喜马拉雅净化[墨鱼版]
+// @Author            @ddgksf2013
+// @ForHelp           若有屏蔽广告的需求，可公众号后台回复APP名称
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2024-04-13
+// @Attention         如果广告仍然存在，请清除缓存或卸载应用重新安装
+// @Function          去广告配置（自用，不定期更新）
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.27
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/Ximalaya.conf
+// ==/UserScript==
+
+
+hostname = *.xima*.*, *.xmcdn.*
+# > XiMaLaYa_喜马拉雅_首页顶部去除直播@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/discovery-category\/customCategories url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ximalaya_json.js
+# > XiMaLaYa_喜马拉雅_修复轮播Ad失效Bug@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/discovery-feed\/focus\/queryF url reject
+# > XiMaLaYa_喜马拉雅_播放页_Live@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/mobile-playpage\/view\/ url reject
+# > XiMaLaYa_喜马拉雅_MyInfo红点提醒@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/chaos-notice-web\/v1\/message\/preview\/list url reject
+# > XiMaLaYa_喜马拉雅_屏蔽大红包Tips@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/social-web\/bottomTabs\/dynamicEntrance\/status url reject
+# > XiMaLaYa_喜马拉雅_屏蔽gif弹窗Ad@ddgksf2013
+^https?:\/\/.*\.xmcdn\.com\/\w{8}\/\w{4}-\w{16}\/.+gif$ url reject
+# > XiMaLaYa_喜马拉雅_gslb@ddgksf2013
+^https?:\/\/gslb.*\.xima.*\.com\/ url reject
+# > XiMaLaYa_喜马拉雅_屏蔽Aged请求@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/(dog-portal\/checkOld|(child-mobile\/child|aged-mobile\/aged)\/mode\/query) url reject
+# > XiMaLaYa_喜马拉雅_部分Tab弹窗@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/discovery-feed\/isShowUserGiftPendant url reject
+# > XiMaLaYa_喜马拉雅_屏蔽红点提示@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/mobile-user\/unread url reject
+# > XiMaLaYa_喜马拉雅_屏蔽minor请求@ddgksf2013
+^https?:\/\/.*\.xima.*\.com/mobile-user/minorProtection/pop url reject
+# > XiMaLaYa_喜马拉雅_屏蔽隐私搜集@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/collector\/xl\/v\d url reject
+# > XiMaLaYa_喜马拉雅_屏蔽版本更新@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/butler-portal\/versionCheck url reject
+# > XiMaLaYa_喜马拉雅_屏蔽开屏广告@ddgksf2013
+^https?:\/\/(adse\.wsa|adse|adbehavior|xdcs-collector)\.xima.*\.com\/.* url reject
+# > XiMaLaYa_喜马拉雅_屏蔽位置请求@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/mobile\/discovery\/v\d\/location url reject
+# > XiMaLaYa_喜马拉雅_屏蔽热搜词@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/(hub\/)?hotWord url reject
+# > XiMaLaYa_喜马拉雅_屏蔽热搜board@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/(hub\/)?hotWordBillboard url reject
+# > XiMaLaYa_喜马拉雅_屏蔽搜索框定时_Ad@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/(hub)?guideWord url reject
+# > XiMaLaYa_喜马拉雅_屏蔽实时Ad请求@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/api\/v\d\/adRealTime url reject
+# > XiMaLaYa_喜马拉雅_屏蔽ting_Ad@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/ting\/(loading|feed|home)? url reject
+# > XiMaLaYa_喜马拉雅_屏蔽首页横幅_Ad@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/focus-mobile\/focusPic url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ximalaya_json.js
+# > XiMaLaYa_喜马拉雅_屏蔽首页动态_Ad@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/discovery-feed\/v\d\/mix url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ximalaya_json.js
+# > XiMaLaYa_喜马拉雅_屏蔽Tab页滚动_Ad@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/discovery-category\/v\d/category url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ximalaya_json.js
+# > XiMaLaYa_喜马拉雅_去除我的页面Ad_Tag@ddgksf2013
+^https?:\/\/.*\.xima.*\.com\/mobile-user\/v\d\/homePage url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/ximalaya_json.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/KeepAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        Keep应用净化[墨鱼版]
+// @Author            @ddgksf2013
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-03-26
+// @Function          应用界面简化、去除广告
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.10
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/KeepAds.conf
+// ==/UserScript==
+
+
+hostname=hc-ssp.sm.cn, api.gotokeep.com, 42.187.199.248, kad.gotokeep.com
+
+# > 屏蔽应用内弹窗
+^https?:\/\/api\.gotokeep\.com\/guide-webapp\/v\d\/popup\/getPopUp url reject-200
+^https?:\/\/api\.gotokeep\.com\/running\/v\d\/home\/dialog url reject-200
+# > 屏蔽部分启动弹窗
+^https?:\/\/api\.gotokeep\.com\/kprime\/v\d\/popups\/primeGuide url reject-200
+# > 屏蔽开屏广告请求
+^https?:\/\/hc-ssp\.sm\.cn url reject-200
+^https?:\/\/kad\.gotokeep\.com\/op-engine-webapp\/v\d\/ad url reject-200
+# > 屏蔽青少年弹窗
+^https?:\/\/api.gotokeep.com/cauchy/growth/init url reject-200
+# > 屏蔽搜索栏自动填充词
+^https?:\/\/api\.gotokeep\.com\/search\/v\d\/default\/keyword\/list url reject-200
+# > 屏蔽热词
+^https?:\/\/api\.gotokeep\.com\/search\/v\d\/hotword\/list url reject-200
+^https?:\/\/api\.gotokeep\.com\/search\/v\d\/hotHashtag\/list url reject-200
+# > 屏蔽hotCourse
+^https?:\/\/api\.gotokeep\.com\/search\/v\d\/hotCourse\/list url reject-200
+# > 屏蔽adwebapp
+^https?:\/\/api\.gotokeep\.com\/op-engine-webapp\/v\d\/ad url reject-200
+# > 屏蔽广告预加载
+^https?:\/\/api\.gotokeep\.com\/ads\/v\d\/ads\/preload url reject-200
+# > 屏蔽adbox
+^https?:\/\/api\.gotokeep\.com\/training\/box\/config url reject-200
+# > 屏蔽更新
+^https?:\/\/api\.gotokeep\.com\/anno\/v\d\/upgrade\/check url reject-200
+# > 我的页面去推广
+^https?:\/\/api\.gotokeep\.com\/athena\/v\d\/people\/my$ url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/keepStyle.js
+# > 应用底部栏净化
+^https?:\/\/api\.gotokeep\.com\/config\/v\d\/basic url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/keepStyle.js
+# > 首页信息流去广告
+^https?:\/\/api\.gotokeep\.com\/twins\/v4\/feed\/course url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/keepStyle.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/GoofishAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        小黄鱼净化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除开屏广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-09-06
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         使用前请卸载咸鱼，挂载脚本然后使用
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.11
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/GoofishAds.conf
+// ==/UserScript==
+
+
+
+hostname = acs.m.goofish.com, g-acs.m.goofish.com
+
+
+host-suffix,iyes.youku.com,reject
+
+# > 开屏广告@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.*splash\.ads url reject-200
+# > 首页右下角悬浮球@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idle.user.strategy.list url jsonjq-response-body '.data.strategies = [{}]'
+# > 开屏通用广告@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.idle.ad.expose url reject-200
+# > 首页顶部Tab@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlehome.home.circle.list url jsonjq-response-body '.data.circleList |= map(select(.bizCode != "saveMoney"))'
+# > 首页信息流@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlehome.home.nextfresh url jsonjq-response-body '.data.homeTopList |= [ .[0] ] | .data.sections |= map(select(.data.bizType == "item"))'
+# > 搜索填词@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlemtopsearch.search.shade url jsonjq-response-body '.data.singleShadeWords =[{}]'
+# > 猜你可能找@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlemtopsearch.item.search.activate url jsonjq-response-body '.data.cardList = [{}]'
+# > 搜索发现@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlemtopsearch.search.discover url jsonjq-response-body 'del(.data.resultList)'
+# > 我的页面@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.idle.user.page.my.adapter url jsonjq-response-body '.data.ability=[] | .data.container.sections |= map(select(.sectionBizCode | test("head|user|trade")))'
+# > 我的页面信息流处理@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idle.item.buy.feeds url jsonjq-response-body 'del(.data.sections)'
+# > 本地信息流AD@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idle.local.home url jsonjq-response-body '.data.sections |= map(select(.data.bizType == "item"))'
+# > 搜索结果信息流AD@ddgksf2013
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idlemtopsearch.search url jsonjq-response-body '.data.resultList |= map(select(.data.item.main.clickParam.args.biz_type == "item"))'
+# > 商品底部推荐商品信息流AD@ddgksf2013 
+^https?:\/\/(g-)?acs\.m\.goofish\.com\/gw\/mtop.taobao.idle.item.recommend url jsonjq-response-body '.data.cardList |= map(select(.cardData.bizType != "mamaAD"))'
+# > AMDC处理@ddgksf2013
+^http:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,4}(:\d+)?\/amdc\/mobileDispatch url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/SmzdmAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        什么值得买净化[墨鱼版]
+// @Author            @blackmatrix7, @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2024-08-12
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.3
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/SmzdmAds.conf
+// ==/UserScript==
+
+
+hostname = app-api.smzdm.com, *.zdmimg.com, homepage-api.smzdm.com, haojia-api.smzdm.com, haojia.m.smzdm.com, baike-api.smzdm.com, s-api.smzdm.com, zhiyou.m.smzdm.com
+
+
+
+# > 搜索框填词@ddgksf2013
+^https?:\/\/s-api.smzdm\.com\/sou\/search_default_keyword url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 好价详情页去广告@blackmatrix7
+^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/other_modul url reject-200
+# > 好价详情页红包小助手@blackmatrix7
+^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/user_related_modul url reject-200
+# > Wiki@blackmatrix7
+^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/wiki_related_modul url reject-200
+# > 开屏去广告@blackmatrix7@ddgksf2013
+^https?:\/\/app-api\.smzdm\.com\/util\/loading url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+^https?:\/\/.*zdmimg\.com\/cpm\/api\/v\d\/advert_distribution\/get_all_advertise url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 首页去广告@blackmatrix7@ddgksf2013
+^https?:\/\/homepage-api\.smzdm\.com\/v3\/home url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 好价去广告@blackmatrix7
+^https?:\/\/haojia-api\.smzdm\.com\/home\/list url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 好价详情页去广告@blackmatrix7
+^https?:\/\/haojia\.m\.smzdm\.com\/detail_modul\/article_releated_modul url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 百科去广告@blackmatrix7
+^https?:\/\/baike-api\.smzdm\.com\/home_v3\/list url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 搜索结果去广告@blackmatrix7
+^https?:\/\/s-api\.smzdm\.com\/sou\/list_v10 url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 搜索标签去广告@blackmatrix7
+^https?:\/\/s-api\.smzdm\.com\/sou\/filter\/tags\/hot_tags url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+# > 值会员权益中心banner广告@blackmatrix7
+^https?:\/\/zhiyou\.m\.smzdm\.com\/user\/vip\/ajax_get_banner url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/smzdm_json.js
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/XiaoYuZhouAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        小宇宙FM去广告[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-09-26
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.3
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/XiaoYuZhouAds.conf
+// ==/UserScript==
+
+hostname = api.xiaoyuzhoufm.com, 118.31.123.175, 112.124.203.116, 118.31.125.171, 47.57.181.112, 47.57.182.96
+
+# > 搜索推广@ddgksf2013
+^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/search\/get-express url reject-200
+# > 搜索填词@ddgksf2013
+^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/search\/get-preset url reject-200
+# > 搜索建议@ddgksf2013
+^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/category\/list-daily-suggestion url reject-200
+# > 开屏广告@ddgksf2013
+^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/flash-screen\/list url reject-200
+# > 首页信息流推广@ddgksf2013
+^https?:\/\/api\.xiaoyuzhoufm\.com\/v\d\/discovery-feed\/list url jsonjq-response-body '.data |= map(select(.type != "DISCOVERY_BANNER"))'
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/MoJiWeatherAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        墨迹天气净化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-11-03
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.2
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/MoJiWeatherAds.conf
+// ==/UserScript==
+
+
+hostname = *.api.moji.com, tnc*-*.zijieapi.com
+
+
+# > 我的页面@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/json\/entrance\/list url jsonjq-response-body '.entrance_region_res_list |= map(select(.region_name | IN("工具区", "我页面灯泡", "banner区") | not))'
+# > 首页顶部浮窗推广@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/flycard\/flyCard url reject-200
+# > 首页底部短视频流@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/shortvideo url reject-200
+# > 商品推广@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/json\/advertising_goods url reject-200
+# > 屏蔽时景发现页@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/forum url reject-200
+# > 屏蔽时景关注@ddgksf2013
+^https?:\/\/.*api\.moji\.com\/user\/dynamic_v\d\/json\/someone_interest url reject-200
+# > DNS处理@ddgksf2013
+^https:\/\/tnc.*zijieapi\.com\/get_domains url reject-200
+# > 开屏广告@ddgksf2013
+host-suffix, adlaunch.moji.com, reject
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/CainiaoAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        菜鸟[菜鸟裹裹](支付宝小程序)净化[墨鱼版]
+// @Author            @ddgksf2013
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-10-07
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         使用前请卸载菜鸟APP，挂载脚本然后使用
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.16
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/CainiaoAds.conf
+// ==/UserScript==
+
+
+hostname=*.cainiao.com, guide-acs.m.taobao.com, acs4miniapp-inner.m.taobao.com
+
+
+# > 菜鸟裹裹_amdc处理@ddgksf2013
+^http:\/\/amdc\.m\.taobao\.com url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+# > 菜鸟裹裹_我的页面去除推广[卸载重装]@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.app\.e2e\.engine\.page\.fetch url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/cainiao_json.js
+# > 菜鸟裹裹_首页中部的问邻居推广@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.nbpresentation\.homepage\.merge\.get\.cn url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/cainiao_json.js
+# > 菜鸟裹裹_首页中部的惊喜福利推广@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.nbpresentation\.protocol\.homepage\.get\.cn url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/cainiao_json.js
+# > 菜鸟裹裹_搜索框下方今日好物推荐@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.adkeyword url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/cainiao_json.js
+# > 菜鸟裹裹_通用广告请求@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.(?!.*_home) url reject-200
+# > 菜鸟裹裹_通用广告请求@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\.mshow\.cn url reject-200
+# > 菜鸟裹裹_首页底部商品推广@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.nbcps\.presentation\.fetch\.cn url reject-200
+# > 菜鸟裹裹_底部角标推广@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.cainiao\.com\/gw\/mtop\.cainiao\.app\.home\.v\d+\.bottom\.area url reject-200
+
+
+# > 菜鸟裹裹_支付宝小程序_通用广告请求@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.taobao\.com\/gw\/mtop\.cainiao\.guoguo\.nbnetflow\.ads\. url reject-200
+# > 菜鸟裹裹_支付宝小程序_底部商品推广新@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.taobao\.com\/gw\/mtop\.alimama\.abyss\.unionpage\.get url reject-200
+# > 菜鸟裹裹_支付宝小程序_底部商品推广旧@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.taobao\.com\/gw\/mtop\.cainiao\.adx\.flyad\.getad url reject-200
+# > 菜鸟裹裹_支付宝小程序_匿名选择@ddgksf2013
+^https?:\/\/[a-zA-Z0-9_.-]+\.taobao\.com\/gw\/mtop\.cainiao\.nbmensa\.research\.researchservice\.consultmerge url reject-200
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/QiShuiMusicAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        汽水音乐净化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-09-26
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         使用前请卸载汽水音乐，挂载脚本然后使用
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.6
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/QiShuiMusicAds.conf
+// ==/UserScript==
+
+
+hostname = beta-luna.douyin.com, api.qishui.com, tnc*-*.zijieapi.com
+
+# > 视频广告@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/media_ads url reject-200
+# > 通用广告@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/ads url reject-200
+# > 位置隐私@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/location\/info url reject-200
+# > 广告弹窗@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/commerce url reject-200
+# > TAGS推荐@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/hashtag\/recommend url reject-200
+# > 我的页面推广@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/me\? url jsonjq-response-body 'del(.reward_ad_banner)'
+# > 会员免费听整月VIEW@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/card url jsonjq-response-body 'del(.preview_guide)'
+# > 热门搜索@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/search-block url jsonjq-response-body 'del(.search_chart_block)'
+# > DNS处理@ddgksf2013
+^https:\/\/tnc.*zijieapi\.com\/get_domains url reject-200
+# > 搜索界面活动@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/activities url jsonjq-response-body 'del(.activity_map)'
+# > 音乐流推广@ddgksf2013
+^https:\/\/[a-zA-Z0-9_-]+(\.[a-zA-Z0-9_-]+){1,3}\/luna\/feed\/song-tab url jsonjq-response-body '.items |= map(select(.type == "track"))'
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TaoPiaoPiaoAds.conf (qx_format=True) =====
+// ==UserScript==
+// @ScriptName        淘票票净化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-12-06
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         使用前请卸载淘票票，挂载脚本然后使用
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.5
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TaoPiaoPiaoAds.conf
+// ==/UserScript==
+
+
+
+hostname = acs.m.taobao.com
+
+
+# > amdc处理@ddgksf2013
+^http:\/\/amdc\.m\.taobao\.com url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+# > 开屏广告@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.mtopadvertiseapi.queryloadingbanner url jsonjq-response-body '.data.returnValue={}'
+# > 广告预加载@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.independentadvertiseapi.querypreloadadvertise url jsonjq-response-body '.data.returnValue=[]'
+# > 搜索框下方@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.mtopsearchapi.getranklistbytypeforsearch url jsonjq-response-body '.data.returnValue={}'
+# > 搜索填词@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.mtopintegrationapi.homeconfig url jsonjq-response-body '.data.returnValue={}'
+# > 我的页面推广Banner@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.mtopindependentadvertiseapi.queryadvertise url jsonjq-response-body '.data.returnValue=[]'
+# > 首页信息流顶部和最底部@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.life.aristotle.get url jsonjq-response-body '.data.nodes[]?.nodes |= map(select(.data.componentId | IN("tpp_banner_loop", "tpp_guess_like") | not))'
+# > 启动弹窗@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.life.popup.get url jsonjq-response-body '.data={}'
+# > 影院Tab栏顶部广告@ddgksf2013
+https://acs.m.taobao.com/gw/mtop.film.mtopitemadvertiseapi.queryadvertise url jsonjq-response-body 'del(.data.returnValue)'
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/AmapAds.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        高德地图净化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2025-12-06
+// @Suitable          自行观看“# > ”注释内容
+// @Attention         使用前请卸载高德地图，挂载脚本然后使用
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.28
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/AmapAds.conf
+// ==/UserScript==
+
+
+hostname = m5.amap.com, m5-zb.amap.com, center.amap.com, amap-aos-info-nogw.amap.com, ai.amap.com
+
+host-suffix, optimus-ads.amap.com, direct
+
+
+# > 高德地图_开屏请求@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/aos\/alimama\/splash_screen url reject-200
+# > 高德地图_首页底部信息流@ddgksf2013
+^https?:\/\/.*\.amap\.com\/v\d\/ai_rec\/ url reject-dict
+# > 高德地图_amdc处理@ddgksf2013
+^http:\/\/amdc\.m\.taobao\.com url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amdc.js
+# > 高德地图_底部tab栏角标@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/message\/notice\/list url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_路线规划下方广告@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/faas\/amap-navigation\/card-service-route-plan\? url reject-dict
+# > 高德地图_首页右中广告@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/shield\/frogserver\/aocs\/updatable url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_附近页面@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/shield\/search\/nearbyrec_smart url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_打车页面处理@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/promotion-web\/resource url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_Tip请求@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/boss\/order_web\/\w{8}_information url reject-200
+# > 高德地图_首页底部处理@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/faas\/amap-navigation\/main-page url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_通用广告请求@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/asa\/ads_attribution url reject
+# > 高德地图_开屏广告@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/valueadded\/alimama\/splash_screen url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_首页顶部推广@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/msgbox\/pull url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_我的页面@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/shield\/dsp\/profile\/index\/nodefaas url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_搜索框热词@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/shield\/search\/new_hotword url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/amap.js
+# > 高德地图_搜索框scene@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/shield\/scene\/recommend url reject-dict
+# > 高德地图_首页左上角gif@ddgksf2013
+^https?:\/\/.*\.amap\.com\/uploadimg\/\w+\.gif url reject-img
+# > 高德地图_左下天气@ddgksf2013
+^https?:\/\/.*\.amap\.com\/ws\/valueadded\/weather url reject-dict
+
+# ===== source: https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/BingSimplify.conf (qx_format=False) =====
+// ==UserScript==
+// @ScriptName        Bing首页简化[墨鱼版]
+// @Author            @ddgksf2013
+// @Function          如果有需要的去除广告的APP，可自行在共享表格中添加需求
+// @AddRequest        https://bit.ly/addRequestforAdBlock
+// @WechatID          墨鱼手记
+// @TgChannel         https://t.me/ddgksf2021
+// @Contribute        https://t.me/ddgksf2013_bot
+// @UpdateTime        2023-12-18
+// @Suitable          自行观看“# > ”注释内容[请卸载重装]
+// @Attention         如需引用请注明出处，谢谢合作！
+// @Version           V1.0.4
+// @ScriptURL         https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/BingSimplify.conf
+// ==/UserScript==
+
+
+
+hostname = sapphire.api.microsoftapp.net, assets.msn.com, api.msn.com
+
+# > bing_首页优化@ddgksf2013
+^https?:\/\/sapphire\.api\.microsoftapp\.net\/config\/api\/v1\/get url script-response-body https://raw.githubusercontent.com/ddgksf2013/Scripts/refs/heads/master/bing.js
+# > bing_位置请求@ddgksf2013
+^https?:\/\/assets\.msn\.com\/service\/weather\/locations\/search url reject-dict
+# > bing_信息流@LE
+^https:\/\/assets\.msn\.com\/service\/news\/feed\/pages\/startmhp url reject-dict
+# > bing_天气请求@ddgksf2013
+^https?:\/\/api\.msn\.com\/weather url reject-dict
+

@@ -27,6 +27,8 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CUSTOM_FILE = os.path.join(HERE, "custom.txt")
 SOURCES_FILE = os.path.join(HERE, "sources.txt")
 OUTPUT_FILE = os.path.join(HERE, "adblock.list")
+REWRITE_SOURCES_FILE = os.path.join(HERE, "rewrite_sources.txt")
+REWRITE_OUTPUT = os.path.join(HERE, "rewrite.list")
 
 IP_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}(/\d{1,2})?$")
 DOMAIN_RE = re.compile(r"^(?:[a-z0-9*](?:[a-z0-9-*]*[a-z0-9])?\.)+[a-z]{2,}$", re.I)
@@ -128,9 +130,39 @@ def load_sources():
             print(f"[跳过] 上游抓取失败，已忽略: {url}  ({e})")
 
 
+def build_rewrite():
+    """抓取墨鱼(ddgksf2013)各 App 重写规则，合并为单条订阅用的 rewrite.list。
+    任何来源抓取失败都跳过，保证已有 rewrite.list 不被清空。"""
+    if not os.path.exists(REWRITE_SOURCES_FILE):
+        return
+    urls = []
+    with open(REWRITE_SOURCES_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.split("#", 1)[0].strip()
+            if line and line.startswith("http"):
+                urls.append(line)
+    if not urls:
+        return
+    blocks = []
+    for url in urls:
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                txt = resp.read().decode("utf-8", "ignore")
+            blocks.append(f"# ===== source: {url} =====\n" + txt.rstrip() + "\n")
+            print(f"[OK] 已合并重写: {url}  ({len(txt)}B)")
+        except Exception as e:
+            print(f"[跳过] 重写抓取失败，已忽略: {url}  ({e})")
+    if blocks:
+        with open(REWRITE_OUTPUT, "w", encoding="utf-8") as f:
+            f.write("\n".join(blocks) + "\n")
+        print(f"[完成] 重写清单共 {len(blocks)} 个来源 -> {REWRITE_OUTPUT}")
+
+
 def main():
     load_custom()
     load_sources()
+    build_rewrite()
     rules_list = sorted(rules)
     header = [
         "# NAME: Apple-Ads-Block (Quantumult X)",
