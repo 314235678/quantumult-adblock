@@ -28,19 +28,24 @@
 
 ## 二、在 Quantumult X 中使用
 
-1. 把 `adblock.list` 托管到一个可访问的 URL（见第三节）。
-2. 打开 Quantumult X → 长按右下角小风车 → **配置文件 → 编辑**。
-3. 找到（或新建）`[rule_remote]` 段落，把下面这行加进去（换成你的真实 URL）：
+规则分两层，**建议都加**（完整片段见 `quantumult-snippet.conf`，直接复制粘贴）：
 
-   ```
-   https://raw.githubusercontent.com/你的用户名/quantumult-adblock/main/adblock.list, tag=AppleAds, update-interval=86400
-   ```
+**① 域名拒绝层（我制作，无需 MITM，立即生效）**
+覆盖 Apple / Google / Meta / X / 抖音·TikTok / 微信·腾讯 / 百度 / 阿里 + 通用广告&追踪 SDK。
+在配置文件的 `[rule_remote]` 段加入：
+```
+https://raw.githubusercontent.com/你的用户名/quantumult-adblock/main/adblock.list, tag=AppleAds, update-interval=86400
+```
 
-   - `update-interval=86400`：每 24 小时自动拉取一次（想更"实时"可改成 `3600`）。
-   - 也可以在 Quantumult X 里手动点"更新"立即刷新。
-4. 保存，规则立即生效。
+**② 应用内广告深度去除层（墨鱼 ddgksf2013，需 MITM）**
+去除微信小程序、微博、B站、网易云、YouTube、Reddit、贴吧等 **App 内的信息流/开屏/界面广告**
+（这类广告我那份域名清单拦不掉，只能靠 MITM + 复写）。
+在配置文件的 `[rewrite_remote]` 段加入 `quantumult-snippet.conf` 里列出的墨鱼规则，
+并在 `[mitm]` 段加上对应 hostname、开启 MitM + 信任 CA 证书。嫌麻烦可直接导入墨鱼完整配置：
+`https://ddgksf2013.top/Profile/QuantumultX.conf`。
 
-> 提示：这条规则是"拒绝连接"型，**不影响** Quantumult X 的代理/节点分流，只是把命中广告域名的请求丢弃。
+> 提示：① 是"拒绝连接"型，**不影响** Quantumult X 的代理/节点分流。
+> `update-interval=86400` 每 24 小时自动拉取（想更"实时"改 `3600`），也可手动点"更新"立即刷新。
 
 ---
 
@@ -80,24 +85,21 @@ python3 build.py
 
 ## 五、重要实话：哪些广告"拦不彻底"
 
-网络层（域名拒绝）对**横幅广告、开屏广告、SDK 广告、追踪埋点**非常有效，
-但下面这些情况**单靠 Quantumult X 规则无法彻底去除**，需要说明：
+网络层（域名拒绝）+ 墨鱼复写（MITM）已经能覆盖绝大多数场景，但仍有硬限制：
 
-- **微信朋友圈 / 公众号信息流广告、抖音/TikTok 信息流广告**：
-  这类广告与正常内容走**同一个域名、同一个接口**（如 `api.twitter.com`、
-  `mmbiz`、`snssdk` 内容接口），且 App 普遍启用了**证书锁定（证书绑定）**，
-  Quantumult X 即使开 MITM 也难以解密、更无法区分"这是广告还是正常内容"。
-  强行按域名拦截会**直接让 App 刷不出内容**，所以本清单刻意**不拦这些主接口**，
-  只拦它们"可分离的"广告/统计子域名（如广点通 `gdt.qq.com`、抖音 `ad.douyin.com`、
-  Twitter `ads-twitter.com`）。
-- **Telegram**：设计上几乎无广告（仅频道"赞助消息"走主接口），网络拦截收益极低，
-  本清单对 Telegram 基本不拦截（避免误伤）。
-- 真正"彻底"去信息流广告，通常需要：iOS「设置 → 隐私 → Apple 广告 → 关闭个性化广告」、
-  各 App 内的"减少个性化推荐"开关，或越狱/巨魔环境下的专用插件（超出本规则范围）。
+- **抖音 / TikTok 信息流广告**：目前**没有可靠的规则**能清掉（墨鱼也没有抖音专用规则）。
+  原因是抖音的信息流广告与正常视频走**同一接口、且启用了证书锁定**，无法区分也无法拦截，
+  强行拦会刷不出内容。只能靠 App 内"减少个性化推荐"等开关缓解。
+- **微信朋友圈 / 公众号信息流广告**：微信小程序广告、部分界面广告可被墨鱼 `Applet.conf` 等
+  复写去除；但**公众号图文信息流广告的复写规则已失效**（墨鱼标注），目前无解。
+- **Telegram**：设计上几乎无广告（仅频道"赞助消息"走主接口），网络拦截收益极低，不拦。
+- **X / Twitter 推广推文**：推广推文与正常时间线同接口（`api.twitter.com`），
+  域名层只能拦掉 `ads-twitter.com` / `analytics.twitter.com` 等可分离的广告/统计域名，
+  无法清掉时间线里的推广推文本身。
 
-一句话：**本规则能让"广告请求"大幅减少、追踪被切断、开屏/横幅/SDK 广告明显变少，
-但无法承诺把微信、抖音的信息流原生广告 100% 清空**——那是 App 自己服务端下发的，
-不在你 iPhone 的网络规则能力范围内。
+一句话：**开屏、横幅、SDK、追踪埋点、以及一批 App 的界面/信息流广告能被清掉；
+但抖音信息流、微信公众号图文广告、Twitter 推广推文这类"同接口+证书锁定"的原生广告，
+单靠 Quantumult X 规则无法 100% 清空**——那是 App 服务端下发的，超出网络规则能力。
 
 ---
 
