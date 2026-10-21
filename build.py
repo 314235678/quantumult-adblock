@@ -35,12 +35,62 @@ DOMAIN_RE = re.compile(r"^(?:[a-z0-9*](?:[a-z0-9-*]*[a-z0-9])?\.)+[a-z]{2,}$", r
 
 rules = set()  # 去重后的规则行
 
+# Quantumult X 重写行合法的关键字（第 2 个空白分隔字段）
+REWRITE_KEYWORDS = {
+    "url",
+    "script-request-header", "script-request-body",
+    "script-response-header", "script-response-body",
+    "script-echo-response", "script-analyze-echo-response",
+    "request-header", "response-header",
+}
+
+
+def is_valid_qx_rewrite_line(line: str) -> bool:
+    """校验一行是否为合法的 Quantumult X 重写规则/注释/hostname。"""
+    s = line.strip()
+    if not s:
+        return False
+    if s.startswith(("#", ";", "!")):
+        return True
+    if re.match(r"^hostname\s*=", s, re.I):
+        return True
+    parts = s.split()
+    if len(parts) < 3:
+        return False
+    return parts[1].lower() in REWRITE_KEYWORDS
+
+
+def sanitize_rewrite(content: str, src_label: str):
+    """清洗单个重写源：剔除非法行；若整体像 HTML 网页则返回 None（整源弃用）。"""
+    lines = content.splitlines()
+    # 源级 HTML 检测
+    html_markers = sum(
+        1 for l in lines
+        if re.search(r"<(html|head|body|div|style|script|meta|title)\b|data-theme|--bg-|:hover|@media|<title>", l, re.I)
+    )
+    if html_markers > 5:
+        print(f"[弃用] 源内容为 HTML 网页而非规则: {src_label} (HTML特征行 {html_markers})")
+        return None
+    kept, dropped = [], 0
+    for l in lines:
+        if is_valid_qx_rewrite_line(l):
+            kept.append(l)
+        else:
+            if l.strip():
+                dropped += 1
+    if dropped:
+        print(f"[清洗] {src_label}: 剔除 {dropped} 条非 QX 语法行")
+    return "\n".join(kept) + "\n"
+
 
 def add_host_suffix(domain: str):
     d = domain.strip().lower().lstrip("*.").rstrip(".")
     if not d or d in ("*",):
         return
     if IP_RE.match(d):
+        # Quantumult X 要求 IP-CIDR 必须带掩码：纯 IP 补 /32
+        if "/" not in d:
+            d = f"{d}/32"
         rules.add(f"IP-CIDR,{d},REJECT")
         return
     if DOMAIN_RE.match(d):
@@ -149,8 +199,11 @@ def build_rewrite():
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=25) as resp:
                 txt = resp.read().decode("utf-8", "ignore")
-            blocks.append(f"# ===== source: {url} =====\n" + txt.rstrip() + "\n")
-            print(f"[OK] 已合并重写: {url}  ({len(txt)}B)")
+            cleaned = sanitize_rewrite(txt, url)
+            if cleaned is None:
+                continue
+            blocks.append(f"# ===== source: {url} =====\n" + cleaned.rstrip() + "\n")
+            print(f"[OK] 已合并重写: {url}  ({len(cleaned)}B)")
         except Exception as e:
             print(f"[跳过] 重写抓取失败，已忽略: {url}  ({e})")
     if blocks:

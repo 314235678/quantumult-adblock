@@ -28,10 +28,9 @@ https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/BingSimplify
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/ChinaUnicomAds.conf
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/FakeiOSAds.conf
 https://github.com/ddgksf2013/Rewrite/raw/master/AdBlock/CaiYunAds.conf
-https://ddgksf2013.top/rewrite/BiliBiliAds.conf
-https://ddgksf2013.top/rewrite/StartUpAds.conf
-https://ddgksf2013.top/rewrite/KuaiKanComicsAds.conf
-https://ddgksf2013.top/rewrite/XiaoHongShuAds.conf
+# 注意：ddgksf2013.top 域名的 BiliBiliAds/StartUpAds/KuaiKanComicsAds/XiaoHongShuAds
+# 已于 2026-10 失效（302 跳转到 HTML 首页），官方 GitHub 仓库也无这些文件，故移除；
+# B站/小红书等应用内广告已由 fmz200 大合集(rewrite.snippet)覆盖。
 #
 # ===== 第三方去广告/净化（收进来统一托管）=====
 https://raw.githubusercontent.com/chxm1023/Advertising/main/AppAd.conf
