@@ -1,7 +1,10 @@
 # 墨鱼(ddgksf2013) 应用内去广告重写规则源（Quantumult X 格式）
 # 由 build.py 每日抓取并合并为 rewrite.list（单条订阅链接）
+# 原则：只收「去广告/净化」类；会员VIP解锁、Emby、工具、UI增强、节点等不在此列。
 # 注意：这些规则依赖 HTTPS 解密，需在 QX 开启 MitM 并信任证书；
 #       文件内已自带 hostname 声明，QX 订阅后会自动加入 MitM。
+#
+# ===== 墨鱼 AdBlock 主集（18 个 App）=====
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/Applet.conf
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeChat.conf
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/WeiboAds.conf
@@ -20,3 +23,20 @@ https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/QiShuiMusicA
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/TaoPiaoPiaoAds.conf
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/AmapAds.conf
 https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/BingSimplify.conf
+#
+# ===== 墨鱼 AdBlock 补充（用户原配置中的去广告项）=====
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/master/AdBlock/ChinaUnicomAds.conf
+https://raw.githubusercontent.com/ddgksf2013/Rewrite/refs/heads/master/AdBlock/FakeiOSAds.conf
+https://github.com/ddgksf2013/Rewrite/raw/master/AdBlock/CaiYunAds.conf
+https://ddgksf2013.top/rewrite/BiliBiliAds.conf
+https://ddgksf2013.top/rewrite/StartUpAds.conf
+https://ddgksf2013.top/rewrite/KuaiKanComicsAds.conf
+https://ddgksf2013.top/rewrite/XiaoHongShuAds.conf
+#
+# ===== 第三方去广告/净化（收进来统一托管）=====
+https://raw.githubusercontent.com/chxm1023/Advertising/main/AppAd.conf
+https://raw.githubusercontent.com/fmz200/wool_scripts/main/QuantumultX/rewrite/rewrite.snippet
+https://raw.githubusercontent.com/fmz200/wool_scripts/main/QuantumultX/rewrite/weibo.snippet
+https://github.com/fmz200/wool_scripts/raw/main/QuantumultX/rewrite/cleanup.snippet
+https://github.com/app2smile/rules/raw/master/module/tieba-qx.conf
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/zheye/zheye.snippet
