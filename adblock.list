@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 1425
+# COUNT: 1432
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
 HOST-SUFFIX,0xclicks.com,REJECT
@@ -482,6 +482,7 @@ HOST-SUFFIX,demoaccount.site,REJECT
 HOST-SUFFIX,demonicclanstarch.com,REJECT
 HOST-SUFFIX,desk.unlesscool.com,REJECT
 HOST-SUFFIX,dfyxzuog.com,REJECT
+HOST-SUFFIX,dga9amo.website,REJECT
 HOST-SUFFIX,dgkqqbixb.com,REJECT
 HOST-SUFFIX,dgwxaedsrledc.site,REJECT
 HOST-SUFFIX,dianomi.com,REJECT
@@ -679,6 +680,7 @@ HOST-SUFFIX,hentheautumnca.org,REJECT
 HOST-SUFFIX,hestherchiffer.com,REJECT
 HOST-SUFFIX,hetcash.com,REJECT
 HOST-SUFFIX,heukmsactivator.com,REJECT
+HOST-SUFFIX,hewdasgas.com,REJECT
 HOST-SUFFIX,hgads.com,REJECT
 HOST-SUFFIX,hhvhpxvuu.com,REJECT
 HOST-SUFFIX,hitadsmedia.com,REJECT
@@ -794,6 +796,7 @@ HOST-SUFFIX,lajeshuru.pro,REJECT
 HOST-SUFFIX,land.izuchai.dance,REJECT
 HOST-SUFFIX,landing.meendo.com,REJECT
 HOST-SUFFIX,launch.apple.com,REJECT
+HOST-SUFFIX,ldfyjedytzkpx.space,REJECT
 HOST-SUFFIX,leadstar.com.pl,REJECT
 HOST-SUFFIX,lepidpomps.com,REJECT
 HOST-SUFFIX,lexozfldkklgvc.com,REJECT
@@ -947,6 +950,7 @@ HOST-SUFFIX,optmnstr.com,REJECT
 HOST-SUFFIX,orlovskyi.com,REJECT
 HOST-SUFFIX,ormatenqron.com,REJECT
 HOST-SUFFIX,orquidea.ai,REJECT
+HOST-SUFFIX,othbmudutr.in,REJECT
 HOST-SUFFIX,outbanner.hu.co.kr,REJECT
 HOST-SUFFIX,outpush.net,REJECT
 HOST-SUFFIX,overplantovervaluetwine.com,REJECT
@@ -1245,9 +1249,11 @@ HOST-SUFFIX,thecalokas.com,REJECT
 HOST-SUFFIX,thenetwork18.com,REJECT
 HOST-SUFFIX,theupgradedata.com,REJECT
 HOST-SUFFIX,thevtk.com,REJECT
+HOST-SUFFIX,thoroughgear.com,REJECT
 HOST-SUFFIX,tibacta.com,REJECT
 HOST-SUFFIX,tilerypursers.qpon,REJECT
 HOST-SUFFIX,tinb.net,REJECT
+HOST-SUFFIX,tinyns.me,REJECT
 HOST-SUFFIX,tiz-cc95ue-309.com,REJECT
 HOST-SUFFIX,tizermedias.com,REJECT
 HOST-SUFFIX,tjfot.com,REJECT
@@ -1417,6 +1423,7 @@ HOST-SUFFIX,zergnet.com,REJECT
 HOST-SUFFIX,zeti.com,REJECT
 HOST-SUFFIX,zipup.click,REJECT
 HOST-SUFFIX,zoligirls.com,REJECT
+HOST-SUFFIX,zrraksfxccuop.online,REJECT
 HOST-SUFFIX,zstnzufw.com,REJECT
 HOST-SUFFIX,zugasezuryjoxo.com,REJECT
 HOST-SUFFIX,zzlocalsquared.com,REJECT
