@@ -23,8 +23,10 @@
 | `sources.txt` | ① 的上游合并源（AdGuard 基础清单 + blackmatrix7 广告规则 + 217heidai 广告过滤 + Apple 专用清单） |
 | `rewrite_sources.txt` | ② 的上游合并源（墨鱼 + 黑名单7 + deezertidal + Moli-X + chxm1023 + fmz200 + app2smile 等 30 个） |
 | `wechat_rewrite.conf` | **③ 微信生态专用层**（本地固化，优先级最高）：公众号文章去广告 + 50 余条小程序去广告 |
-| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt / wechat_rewrite.conf 合并、去重、冲突裁决，生成 adblock.list 与 rewrite.list |
-| `verify.py` | **构建产物校验**：数量下限、语法合法性、私有 IP 段、过宽关键词、规则冲突、HTML 污染 |
+| `script_fixes.txt` | **④ 失效脚本地址修复表**：上游脚本被删/换目录时，重定向到可用镜像或丢弃，直接消灭 QX 的「N 个问题存在于子资源」 |
+| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt / wechat_rewrite.conf 合并、去重、冲突裁决、应用脚本修复，生成 adblock.list 与 rewrite.list |
+| `verify.py` | **构建产物校验**：数量下限、语法合法性、私有 IP 段、过宽关键词、规则冲突、HTML 污染、订阅域名自洽性 |
+| `check_scripts.py` | **脚本存活检查**：逐个请求重写脚本，找出 404 并统计牵连多少条规则 |
 | `.github/workflows/update.yml` | 定时 + 规则源变更时自动重建并校验，通过后提交回仓库 |
 | `quantumult-snippet.conf` | 直接贴进 Quantumult X 配置文件的订阅片段（仅两条链接） |
 
@@ -242,6 +244,45 @@ python3 build.py && python3 verify.py
 1. 订阅更新失败时，先停用**域名层**（`[rule_remote]` 那条），不要只停重写层 —— 主因通常在分流。
 2. 打开 QX → 引用 → 找到报错的资源 → 长按复制链接，看它的域名是否在你订阅的规则里被 `REJECT`。
 3. 若用的是本仓库，直接看 Actions 里最近一次的 `verify.py` 输出，`[信息]` 行会打印「被域名层拦截的脚本托管域名数」，正常应为 0。
+
+---
+
+## 十一、QX 提示「N 个问题存在于子资源」怎么办
+
+这个提示跟规则语法无关，**指的是重写规则引用的脚本下载不回来**。点进资源详情能看到每条都标注
+`Status code 404 / 需要更新`。
+
+**为什么会发生**：脚本作者删了仓库、改了目录结构或迁移了账号。规则本身还留在上游清单里，
+但 `script-path` 指向的地址已经不存在了。引用它的每条规则都会计入一个「问题」。
+
+**本仓库怎么处理**：`script_fixes.txt` 是修复表，`build.py` 在合并时自动应用：
+
+```
+# 旧地址或前缀 | 新地址或前缀      -> 字符串替换
+旧地址或前缀 | DROP               -> 丢弃引用它的整条规则
+```
+
+已记录的案例（2026-10）：
+
+| 失效原因 | 影响 | 处理 |
+|---|---|---|
+| `RuCu6/QuanX` 整个仓库被作者删除（用户还在，但该仓库已无） | 45 条规则（爱奇艺/知乎/酷我/京东/粉笔/IT之家/微博） | 整体重定向到 `axtyet/Luminous` 的 `RuCu6/Scripts` 镜像 |
+| blackmatrix7 的什么值得买脚本移入 `script/archive/` | 8 条 | 改路径 |
+| fmz200 的喜马拉雅脚本移入 `Scripts/xmly/` | 5 条 | 改路径 |
+| `jizhi0520` 账号注销，脚本无任何镜像 | 1 条 | DROP |
+
+**以后怎么自查**：本地跑
+
+```bash
+python3 check_scripts.py         # 列出所有失效脚本 + 每条牵连多少规则
+python3 check_scripts.py --list  # 连失效的具体规则行一起打印
+```
+
+把输出的失效地址填进 `script_fixes.txt` 再重建即可。CI 每次构建也会跑一遍（信息性，不阻塞），
+在 Actions 日志里能看到当前有没有 404。
+
+> 判断依据：只有 **404 / 410** 算真失效；超时、5xx、429 属于临时问题，`check_scripts.py` 会分开列出，不用管。
+
 
 
 

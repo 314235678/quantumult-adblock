@@ -1,0 +1,31 @@
+# ============================================================
+# 重写脚本地址修复表 (script_fixes.txt)
+# ------------------------------------------------------------
+# 作用：上游规则里的 script-path 会随作者删仓库/改目录而失效，
+#       失效后 QX 里每条引用它的规则都会显示「Status code 404 / 需要更新」，
+#       资源页顶部则汇总成「N 个问题存在于子资源」。
+#       本文件把失效地址替换成可用地址，或直接把整条规则丢弃。
+#
+# 格式（| 分隔）：
+#   旧地址或旧地址前缀 | 新地址或新前缀      -> 做字符串替换
+#   旧地址或旧地址前缀 | DROP               -> 丢弃引用它的整条规则
+#
+# 注意：按从上到下的顺序做替换，前缀要写足够长以免误伤。
+# ============================================================
+
+# --- 1. RuCu6/QuanX 整个仓库已被作者删除（用户还在，QuanX 仓库没了）---
+# axtyet/Luminous 里保留了完整的 RuCu6/Scripts 镜像，目录结构一致，直接整体重定向。
+# 影响 45 条规则：爱奇艺(cnftp.js)、知乎、酷我、京东(myBlockAds.js)、粉笔、IT之家、微博
+https://raw.githubusercontent.com/RuCu6/QuanX/main/ | https://raw.githubusercontent.com/axtyet/Luminous/main/RuCu6/
+
+# --- 2. blackmatrix7 的什么值得买脚本被移入 archive 子目录 ---
+# 影响 8 条规则
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/smzdm/smzdm_remove_ads.js | https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/archive/smzdm/smzdm_remove_ads.js
+
+# --- 3. fmz200 的喜马拉雅脚本被移入 Scripts/xmly/ 子目录 ---
+# 影响 5 条规则
+https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/xmly_json.js | https://raw.githubusercontent.com/fmz200/wool_scripts/main/Scripts/xmly/xmly_json.js
+
+# --- 4. jizhi0520 账号已注销，脚本无任何镜像 ---
+# 引用它的规则留着也只会报 404，直接丢弃（仅 1 条）
+https://raw.githubusercontent.com/jizhi0520/QX/main/yx.js | DROP

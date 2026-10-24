@@ -12,8 +12,10 @@ on:
       - "sources.txt"
       - "rewrite_sources.txt"
       - "wechat_rewrite.conf"
+      - "script_fixes.txt"
       - "build.py"
       - "verify.py"
+      - "check_scripts.py"
       - ".github/workflows/update.yml"
   workflow_dispatch: {}
 
@@ -38,6 +40,13 @@ jobs:
       - name: Verify build output
         # 防止上游集体抽风时把空清单或坏规则推给订阅者
         run: python3 verify.py
+
+      - name: Check rewrite script liveness
+        # 信息性检查：脚本作者删仓库/改目录会让 QX 里冒出「N 个问题存在于子资源」。
+        # 这里只报告不拦截（网络抖动导致的临时失败不应阻塞清单更新），
+        # 看到失效列表就去 script_fixes.txt 里补一条重定向或 DROP。
+        continue-on-error: true
+        run: python3 check_scripts.py
 
       - name: Commit if changed
         run: |

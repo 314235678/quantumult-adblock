@@ -33,6 +33,10 @@ REWRITE_OUTPUT = os.path.join(HERE, "rewrite.list")
 # 本地固化的重写源（优先级最高，排在最前）：微信生态去广告
 REWRITE_LOCAL_FILE = os.path.join(HERE, "wechat_rewrite.conf")
 
+# 重写脚本地址修复表：把上游已失效的 script-path 重定向到可用镜像，或丢弃整条规则。
+# 不做这件事的后果：QX 资源页会显示「N 个问题存在于子资源」，每条都标注 Status code 404。
+SCRIPT_FIXES_FILE = os.path.join(HERE, "script_fixes.txt")
+
 # 需要从合并结果里剔除的上游重写行（按正则匹配，命中即丢弃）
 # 说明：ddgksf2013 / fmz200 的 getappmsgad 旧写法是把响应体里的 "advertisement"
 # 字符串整体替换成作者名，属于破坏性 hack，作者本人已标注【已失效】；而且它排在
@@ -374,6 +378,22 @@ def load_sources():
             print(f"[跳过] 上游抓取失败，已忽略: {url}  ({e})")
 
 
+def load_script_fixes():
+    """读取 script_fixes.txt，返回 [(旧地址/前缀, 新地址/前缀 或 'DROP')]。"""
+    fixes = []
+    if not os.path.exists(SCRIPT_FIXES_FILE):
+        return fixes
+    with open(SCRIPT_FIXES_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.split("#", 1)[0].strip()
+            if not line or "|" not in line:
+                continue
+            old, new = (x.strip() for x in line.split("|", 1))
+            if old:
+                fixes.append((old, new))
+    return fixes
+
+
 def _drop_reason(line: str):
     """返回该行被剔除的原因；None 表示保留。"""
     for pat in REWRITE_DROP_PATTERNS:
@@ -440,7 +460,9 @@ def build_rewrite():
         except Exception as e:
             print(f"[跳过] 重写抓取失败，已忽略: {url}  ({e})")
 
-    # ---- 阶段一：剔除失效行 + 清洗 hostname ----
+    # ---- 阶段一：重定向失效脚本 / 剔除失效行 / 清洗 hostname ----
+    script_fixes = load_script_fixes()
+    fix_stat = {"replaced": 0, "dropped": 0}
     filtered = []
     for label, lines in sources:
         kept = []
@@ -448,6 +470,23 @@ def build_rewrite():
             s = raw.strip()
             if not s:
                 continue
+
+            # ① 脚本地址修复：先做重定向，命不中再走后面的检查
+            if script_fixes and "://" in s:
+                hit = None
+                for old, new in script_fixes:
+                    if old in s:
+                        hit = (old, new)
+                        break
+                if hit:
+                    old, new = hit
+                    if new.upper() == "DROP":
+                        fix_stat["dropped"] += 1
+                        print(f"[脚本修复] 丢弃（无可用镜像）: {old}")
+                        continue
+                    s = s.replace(old, new)
+                    fix_stat["replaced"] += 1
+
             reason = _drop_reason(s)
             if reason:
                 print(f"[剔除] {label}: {reason} -> {s[:90]}")
@@ -505,6 +544,9 @@ def build_rewrite():
         with open(REWRITE_OUTPUT, "w", encoding="utf-8") as f:
             f.write("\n".join(blocks) + "\n")
         print(f"[完成] 重写清单共 {len(blocks)} 个来源，{total} 条去重后规则 -> {REWRITE_OUTPUT}")
+        if script_fixes:
+            print(f"[脚本修复] 重定向 {fix_stat['replaced']} 条规则的失效脚本地址，"
+                  f"丢弃 {fix_stat['dropped']} 条（无可用镜像）")
         if script_wins:
             print(f"[裁决] 共 {len(script_wins)} 个 URL 模式按「脚本优先于整条拒绝」处理")
         print(f"[完成] 重写清单共 {len(blocks)} 个来源，{len(seen)} 条去重后规则 -> {REWRITE_OUTPUT}")
