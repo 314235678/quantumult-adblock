@@ -454,10 +454,13 @@ def build_rewrite():
                 continue
             m = re.match(r"^hostname\s*=\s*(.*)$", s, re.I)
             if m:
-                hosts = [h.strip() for h in m.group(1).split(",")]
-                safe = [h for h in hosts if h and not _is_subscription_infra(h)]
+                # 上游分隔符不统一：多数用逗号，个别（deezertidal）用空格。
+                # QX 只认逗号，空格分隔的那一行会导致整批域名不进入 MitM、规则静默失效。
+                # 这里统一按「逗号或空白」切开再用逗号重连。
+                hosts = [h for h in re.split(r"[,\s]+", m.group(1).strip()) if h]
+                safe = [h for h in hosts if not _is_subscription_infra(h)]
                 if len(safe) != len(hosts):
-                    removed = [h for h in hosts if h and _is_subscription_infra(h)]
+                    removed = [h for h in hosts if _is_subscription_infra(h)]
                     print(f"[剔除] {label}: hostname 去掉订阅托管域名 {removed}")
                 if not safe:
                     continue

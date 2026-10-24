@@ -220,7 +220,7 @@ from build import SUBSCRIPTION_INFRA  # noqa: E402
 
 mitm_hosts = set()
 for m in re.finditer(r"^hostname\s*=\s*(.+)$", rtext, re.M | re.I):
-    for h in m.group(1).split(","):
+    for h in re.split(r"[,\s]+", m.group(1).strip()):
         h = h.strip().lower().lstrip("*.")
         if h:
             mitm_hosts.add(h)
