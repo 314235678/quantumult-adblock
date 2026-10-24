@@ -183,8 +183,8 @@ python3 build.py && python3 verify.py
 
 | 清单 | 规模 | 构成 |
 |------|------|------|
-| `adblock.list` | 约 3.0 万条 | HOST-SUFFIX 约 2.95 万 + HOST-KEYWORD 约 280 + IP-CIDR 约 570 |
-| `rewrite.list` | 约 3300 条有效规则 | 30 个上游 + 1 个本地固化层，去重后 |
+| `adblock.list` | 约 2.07 万条 | HOST-SUFFIX 约 2.0 万 + HOST-KEYWORD 约 270 + IP-CIDR 约 570 |
+| `rewrite.list` | 约 3200 条有效规则 | 31 个上游 + 1 个本地固化层，去重后；MitM 域名约 1500 个 |
 
 这个量级是刻意控制的：Quantumult X 启动时要把全部规则载入内存逐条匹配，
 **5 万条以上**在低端机上会出现启动变慢、滚动掉帧、续航下降。如果你想要更极致的覆盖，
@@ -209,5 +209,39 @@ python3 build.py && python3 verify.py
 | CI 只提交 `adblock.list` | 重写层的自动更新从来没生效过，订阅收到的永远是首次推送的旧版 | 改为两个产物一起提交 |
 | CI 无任何校验 | 上游集体抽风时会直接把空清单推给订阅者 | 增加 `verify.py` 闸门，不通过即中断 |
 | 旧脚本 `build_rewrite_only.py` 残留 | 不做清洗/去重/剔除，跑一次就会把上述修复全部覆盖掉 | 已删除 |
+| AdGuard **路径级**规则被当成整域规则 | `\|\|github.com/_private/browser/stats` 被转成 `HOST-SUFFIX,github.com,REJECT` —— **因为一条统计接口把整个 GitHub 封了** | 带 `/路径` 的规则一律丢弃（域名层无法精确表达），本轮丢弃 14360 条 |
+| AdGuard **修饰符**规则被兜底逻辑误判 | `$csp=... www.googletagmanager.com jsdelivr.net` 这类行被取末位 token，生成 `HOST-SUFFIX,jsdelivr.net,REJECT` —— **把 CDN 封了** | 删除「取末位 token 当域名」的兜底，无法识别的行一律丢弃 |
+| `jsonjq-response-body` / `echo-response` 等 QX 不支持的动作 | 导入订阅时 QX 报「N 个问题存在于子资源」并逐条忽略 | 建立动作白名单，白名单外全部剔除（本轮剔 38 条） |
+
+---
+
+## 十、事故记录：一次「去广告把自己订阅封掉」的事故
+
+**现象**：订阅本仓库的 `rewrite.list` 后，QX 提示「58 个问题存在于子资源」；
+随后**其他所有订阅都显示「无法连接服务器」**。取消勾选重写层仍不恢复，取消勾选**分流层**才恢复。
+
+**根因**（两个缺陷叠加，都在构建脚本里）：
+
+1. 上游 `217heidai/adblockfilters` 里有 `||github.com/_private/browser/stats` 这种**路径级**规则。
+   `parse_line` 把它当整域处理，生成了 `HOST-SUFFIX,github.com,REJECT`。
+2. AdGuard 的**修饰符**规则（`$csp=` / `$denyallow=` 等）里含有空格，
+   旧兜底逻辑「取最后一个空白分隔的 token 当域名」把 `jsdelivr.net` 也封了。
+
+结果就是：`github.com`、`raw.githubusercontent.com`、`jsdelivr.net` 全被自己的规则拒绝 ——
+而这些正是**所有订阅与重写脚本的托管地**。本仓库 144 个脚本里有 **134 个**在 GitHub 上，
+拉不到就直接表现为「子资源有问题」+「订阅连不上」。
+
+**修复**：
+- 路径级 AdGuard 规则不再降级成整域规则，直接丢弃（宁可少拦，不可错拦）；
+- 删除危险的兜底解析；
+- 新增 `CRITICAL_ALLOW` 基础设施白名单，任何上游都封不到 GitHub / jsDelivr / ghproxy 等；
+- 重写层的 MitM 域名同样排除这些域名；
+- `verify.py` 增加**自洽性检查**：域名层若拦掉了重写脚本的托管域名，或 MitM 覆盖了订阅域名，直接判定构建失败。
+
+**你自己如何自查这类问题**：
+1. 订阅更新失败时，先停用**域名层**（`[rule_remote]` 那条），不要只停重写层 —— 主因通常在分流。
+2. 打开 QX → 引用 → 找到报错的资源 → 长按复制链接，看它的域名是否在你订阅的规则里被 `REJECT`。
+3. 若用的是本仓库，直接看 Actions 里最近一次的 `verify.py` 输出，`[信息]` 行会打印「被域名层拦截的脚本托管域名数」，正常应为 0。
+
 
 

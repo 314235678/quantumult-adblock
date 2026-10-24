@@ -97,6 +97,26 @@ if ip_private:
 if kw_too_wide:
     err(f"{len(kw_too_wide)} 条 HOST-KEYWORD 过宽，可能大面积误杀: {kw_too_wide[:5]}")
 
+# 基础设施白名单回归检查：
+# 这些域名承载着订阅与脚本，一旦被自己推送的规则拦掉，用户会陷入
+# 「开了去广告 → 所有订阅都更新失败」且极难自查的死循环。
+from build import CRITICAL_ALLOW  # noqa: E402
+
+crit_hit = [
+    l for l in lines
+    if l.startswith("HOST-SUFFIX,") and l.split(",")[1].strip().lower() in CRITICAL_ALLOW
+]
+if crit_hit:
+    err(f"域名层拦了基础设施域名（会导致订阅/脚本全部拉不到）: {crit_hit}")
+
+crit_kw = [
+    l for l in lines
+    if l.startswith("HOST-KEYWORD,")
+    and any(l.split(",")[1].strip().lower() in a for a in CRITICAL_ALLOW)
+]
+if crit_kw:
+    err(f"关键词层会连带封锁基础设施域名: {crit_kw}")
+
 # ---------------- E~G：应用内重写层 ----------------
 rtext = read(REWRITE)
 rlines = [l.strip() for l in rtext.splitlines() if l.strip()]
@@ -108,6 +128,39 @@ if len(effective) < MIN_REWRITE_RULES:
 bad_rw = [l for l in effective if not is_valid_qx_rewrite_line(l)]
 if bad_rw:
     err(f"rewrite.list 含 {len(bad_rw)} 条非法重写行，示例: {bad_rw[:3]}")
+
+# QX 不支持的动作用户侧表现为「N 个问题存在于子资源」，必须在发布前清零
+from build import SUPPORTED_REWRITE_ACTIONS  # noqa: E402
+
+bad_action = []
+for l in effective:
+    p = l.split()
+    if len(p) >= 3 and p[2].lower() not in SUPPORTED_REWRITE_ACTIONS:
+        bad_action.append(l)
+if bad_action:
+    err(f"rewrite.list 含 {len(bad_action)} 条 QX 不支持的动作"
+        f"（导入后会被报错忽略）: {[x[:80] for x in bad_action[:3]]}")
+
+# 自洽性检查（本轮「58 个子资源有问题」事故的防回归）：
+# 域名层绝不能拦掉重写脚本所在的托管域名，否则脚本下载失败，
+# 用户看到的是「N 个问题存在于子资源」+「其他订阅无法连接服务器」。
+from urllib.parse import urlparse  # noqa: E402
+
+script_hosts = set()
+for l in effective:
+    for u in re.findall(r"https?://[^\s,]+", l):
+        h = (urlparse(u).hostname or "").lower()
+        if h:
+            script_hosts.add(h)
+blocked_hosts = {
+    l.split(",")[1].strip().lower()
+    for l in lines if l.startswith("HOST-SUFFIX,") and l.count(",") >= 2
+}
+self_block = sorted(h for h in script_hosts if h in blocked_hosts)
+if self_block:
+    err(f"域名层拦掉了重写脚本的托管域名，会导致脚本下载失败: {self_block}")
+print(f"[信息] 重写脚本引用 {len(script_hosts)} 个托管域名，"
+      f"其中被域名层拦截的: {len(self_block)} 个")
 
 # 公众号去广告回归检查：曾经有 3 条"已失效"旧写法抢占同一个 URL
 gam = [l for l in effective if "getappmsgad" in l]
@@ -161,6 +214,23 @@ if benign:
 # hostname 声明检查：重写层若没有任何 hostname，MitM 不会生效
 if not re.search(r"^hostname\s*=", rtext, re.M | re.I):
     err("rewrite.list 缺少 hostname 声明，Quantumult X 不会为这些域名启用 MitM")
+
+# MitM 不得覆盖订阅/脚本托管域名（否则拉订阅可能走中间人而失败）
+from build import SUBSCRIPTION_INFRA  # noqa: E402
+
+mitm_hosts = set()
+for m in re.finditer(r"^hostname\s*=\s*(.+)$", rtext, re.M | re.I):
+    for h in m.group(1).split(","):
+        h = h.strip().lower().lstrip("*.")
+        if h:
+            mitm_hosts.add(h)
+mitm_bad = sorted(
+    h for h in mitm_hosts
+    if any(h == a or h.endswith("." + a) for a in SUBSCRIPTION_INFRA)
+)
+if mitm_bad:
+    err(f"MitM 覆盖了订阅托管域名（会导致订阅更新异常）: {mitm_bad}")
+print(f"[信息] MitM 域名共 {len(mitm_hosts)} 个，覆盖订阅托管域名的: {len(mitm_bad)} 个")
 
 # ---------------- 输出 ----------------
 print("=" * 62)

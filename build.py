@@ -67,9 +67,46 @@ KEYWORD_DENY = {
 }
 KEYWORD_MIN_LEN = 4
 
+# 关键基础设施白名单：这些域名绝不允许进入拒绝清单。
+# 原因：Quantumult X 的订阅、规则、脚本大多托管在它们上面。
+# 一旦被自己推送的规则封掉，就会出现「开了去广告 → 所有订阅都更新失败」的死循环，
+# 而且用户在手机上极难自查。这里做最后一道兜底，任何上游怎么改都封不到。
+CRITICAL_ALLOW = {
+    "github.com", "api.github.com", "codeload.github.com", "gist.github.com",
+    "githubusercontent.com", "githubassets.com", "github.io", "github.dev",
+    "gitlab.com", "bitbucket.org", "gitee.com",
+    "jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com", "npmjs.com",
+    "npmjs.org", "registry.npmjs.org", "statically.io", "fastly.jsdelivr.net",
+    "ghproxy.com", "gh-proxy.com", "ghproxy.net", "mirror.ghproxy.com",
+    "ghfast.top", "raw.gitmirror.com",
+}
+
+# 允许把域名写进拒绝清单，但CRITICAL_ALLOW 的子域也一并放行
+def _is_critical(d: str) -> bool:
+    return any(d == a or d.endswith("." + a) for a in CRITICAL_ALLOW)
+
+
+# 订阅/脚本托管基础设施（CRITICAL_ALLOW 的严格子集）。
+# 重写层的 hostname 也不允许包含它们：一旦被 MitM，QX 拉订阅时会走中间人，
+# 证书或握手稍有异常就表现为"无法连接服务器"，且用户几乎不可能自己想到是这里。
+SUBSCRIPTION_INFRA = {
+    "github.com", "githubusercontent.com", "jsdelivr.net", "unpkg.com",
+    "gitlab.com", "gitee.com", "cdnjs.cloudflare.com", "npmjs.org",
+    "npmjs.com", "statically.io", "ghproxy.com", "gh-proxy.com",
+    "ghproxy.net", "mirror.ghproxy.com", "ghfast.top", "raw.gitmirror.com",
+}
+
+
+def _is_subscription_infra(h: str) -> bool:
+    h = h.strip().lower().lstrip("*.")
+    return any(h == a or h.endswith("." + a) for a in SUBSCRIPTION_INFRA)
+
+
 rules = set()  # 去重后的规则行
 dropped_keywords = []  # 被安全阀拦下的关键词（用于构建日志）
 ip_stat = {"skipped_private": 0, "skipped_broad": 0}  # IP 规则安全阀统计
+path_stat = {"skipped_path_rule": 0}  # 因带路径无法表达而丢弃的规则数
+allow_hits = []  # 被基础设施白名单拦下的域名（用于构建日志）
 
 # Quantumult X 重写行合法的关键字（第 2 个空白分隔字段）
 REWRITE_KEYWORDS = {
@@ -91,9 +128,28 @@ REJECT_ACTIONS = {
     "reject-array", "reject-drop",
 }
 
+# Quantumult X 重写资源里真正支持的动作白名单。
+# 不在白名单里的一律丢弃，否则 QX 导入订阅时会报「N 个问题存在于子资源」并忽略该行：
+#   · jsonjq-response-body  → Surge 专有语法，QX 不支持
+#   · echo-response         → 只能用本机 Data 目录里的文件，不能引用远程 URL
+#   · script-echo-response / script-analyze-echo-response
+#                           → 同属本地数据文件类，远程订阅里会被拒绝
+#   · request-body          → QX 无此动作（改请求体要走脚本）
+SUPPORTED_REWRITE_ACTIONS = {
+    "reject", "reject-200", "reject-img", "reject-dict", "reject-array",
+    "request-header", "response-header", "response-body",
+    "script-request-header", "script-request-body",
+    "script-response-header", "script-response-body",
+    "302",
+}
+
 
 def is_valid_qx_rewrite_line(line: str) -> bool:
-    """校验一行是否为合法的 Quantumult X 重写规则/注释/hostname。"""
+    """校验一行是否为合法的 Quantumult X 重写规则/注释/hostname。
+
+    除语法结构外，还要求动作在 QX 支持的白名单内 —— 否则订阅导入时
+    QX 会逐条报错并忽略，用户看到的就是"N 个问题存在于子资源"。
+    """
     s = line.strip()
     if not s:
         return False
@@ -104,7 +160,22 @@ def is_valid_qx_rewrite_line(line: str) -> bool:
     parts = s.split()
     if len(parts) < 3:
         return False
-    return parts[1].lower() in REWRITE_KEYWORDS
+    if parts[1].lower() != "url":
+        return False
+    return parts[2].lower() in SUPPORTED_REWRITE_ACTIONS
+
+
+def normalize_rewrite_line(line: str) -> str:
+    """把动作关键字统一成小写，避免上游写成 REJECT / Reject 导致 QX 不认。"""
+    s = line.strip()
+    if not s or s.startswith(("#", ";", "!")) or re.match(r"^hostname\s*=", s, re.I):
+        return line
+    parts = s.split()
+    if len(parts) >= 3 and parts[1].lower() == "url":
+        parts[1] = "url"
+        parts[2] = parts[2].lower()
+        return " ".join(parts)
+    return line
 
 
 def sanitize_rewrite(content: str, src_label: str):
@@ -119,14 +190,22 @@ def sanitize_rewrite(content: str, src_label: str):
         print(f"[弃用] 源内容为 HTML 网页而非规则: {src_label} (HTML特征行 {html_markers})")
         return None
     kept, dropped = [], 0
+    bad_actions = {}
     for l in lines:
-        if is_valid_qx_rewrite_line(l):
-            kept.append(l)
+        nl = normalize_rewrite_line(l)
+        if is_valid_qx_rewrite_line(nl):
+            kept.append(nl)
         else:
             if l.strip():
                 dropped += 1
+                p = l.split()
+                if len(p) >= 3 and p[1].lower() == "url":
+                    bad_actions[p[2]] = bad_actions.get(p[2], 0) + 1
     if dropped:
-        print(f"[清洗] {src_label}: 剔除 {dropped} 条非 QX 语法行")
+        detail = ("，其中 QX 不支持的动作: "
+                  + ", ".join(f"{k}×{v}" for k, v in sorted(bad_actions.items(), key=lambda x: -x[1]))
+                  if bad_actions else "")
+        print(f"[清洗] {src_label}: 剔除 {dropped} 条非 QX 语法行{detail}")
     return "\n".join(kept) + "\n"
 
 
@@ -174,8 +253,12 @@ def add_host_suffix(domain: str):
     if IP_RE.match(d):
         ip_cidr_rule(d)
         return
-    if DOMAIN_RE.match(d):
-        rules.add(f"HOST-SUFFIX,{d},REJECT")
+    if not DOMAIN_RE.match(d):
+        return
+    if _is_critical(d):
+        allow_hits.append(d)
+        return
+    rules.add(f"HOST-SUFFIX,{d},REJECT")
 
 
 def add_host_keyword(kw: str):
@@ -184,6 +267,10 @@ def add_host_keyword(kw: str):
         return
     low = kw.lower()
     if len(kw) < KEYWORD_MIN_LEN or low in KEYWORD_DENY:
+        dropped_keywords.append(kw)
+        return
+    # 关键词是子串匹配，若它出现在任何基础设施域名里，同样会造成连带封锁
+    if any(low in a for a in CRITICAL_ALLOW):
         dropped_keywords.append(kw)
         return
     rules.add(f"HOST-KEYWORD,{kw},REJECT")
@@ -206,12 +293,23 @@ def parse_line(line: str):
         return
 
     # AdBlock / uBlock: ||domain^  |https://domain^  |http://domain|
+    #
+    # 关键：必须区分「整域规则」和「路径级规则」。
+    #   ||github.com^                        整域，可安全转成 HOST-SUFFIX
+    #   ||github.com/_private/browser/stats  只针对某条路径，域名层表达不了
+    # 早期版本把后者也按整域处理，结果因为一条统计接口把整个 github.com 封了，
+    # 直接导致所有 GitHub 订阅源和脚本都拉不到（QX 报"无法连接服务器"）。
+    # 无法精确表达的规则宁可丢弃，也不能扩大打击面。
     if s.startswith("||") or s.startswith("|http") or s.startswith("|https"):
-        m = re.match(r"^\|*https?://([^/\^\*]+)", s)
+        m = re.match(r"^\|*https?://([^/^\*]+)(.*)$", s)
         if not m:
-            m = re.match(r"^\|\|([^/\^\*]+)", s)
+            m = re.match(r"^\|\|([^/^\*]+)(.*)$", s)
         if m:
-            add_host_suffix(m.group(1))
+            host, rest = m.group(1), m.group(2)
+            if rest.startswith("/"):
+                path_stat["skipped_path_rule"] += 1
+                return
+            add_host_suffix(host)
         return
 
     # DNS hosts: 0.0.0.0 domain  /  127.0.0.1 domain
@@ -235,10 +333,12 @@ def parse_line(line: str):
         add_host_suffix(s)
         return
 
-    # 含空格/制表符的纯域名（兜底）
-    parts = s.split()
-    if parts and DOMAIN_RE.match(parts[-1]):
-        add_host_suffix(parts[-1])
+    # 已移除「取最后一个空白分隔 token 当域名」的兜底逻辑。
+    # 那条兜底会把 AdGuard 的修饰符规则误当成域名规则，例如：
+    #   ||x.com^$csp=script-src 'self' ... www.googletagmanager.com jsdelivr.net
+    # 会被解析成 HOST-SUFFIX,jsdelivr.net,REJECT —— 把 CDN 整个封了，
+    # 连带所有托管在 jsdelivr 上的订阅与脚本全部失效。
+    # 凡是走到这里仍无法识别的行，一律丢弃（宁可少拦，不可错拦）。
 
 
 def load_custom():
@@ -340,7 +440,7 @@ def build_rewrite():
         except Exception as e:
             print(f"[跳过] 重写抓取失败，已忽略: {url}  ({e})")
 
-    # ---- 阶段一：剔除失效行 ----
+    # ---- 阶段一：剔除失效行 + 清洗 hostname ----
     filtered = []
     for label, lines in sources:
         kept = []
@@ -352,6 +452,16 @@ def build_rewrite():
             if reason:
                 print(f"[剔除] {label}: {reason} -> {s[:90]}")
                 continue
+            m = re.match(r"^hostname\s*=\s*(.*)$", s, re.I)
+            if m:
+                hosts = [h.strip() for h in m.group(1).split(",")]
+                safe = [h for h in hosts if h and not _is_subscription_infra(h)]
+                if len(safe) != len(hosts):
+                    removed = [h for h in hosts if h and _is_subscription_infra(h)]
+                    print(f"[剔除] {label}: hostname 去掉订阅托管域名 {removed}")
+                if not safe:
+                    continue
+                s = "hostname = " + ", ".join(safe)
             kept.append(s)
         filtered.append((label, kept))
 
@@ -425,8 +535,14 @@ def main():
     if dropped_keywords:
         print(f"[安全阀] 丢弃过宽关键词 {len(dropped_keywords)} 个: "
               f"{', '.join(sorted(set(dropped_keywords))[:20])}")
+    if allow_hits:
+        uniq = sorted(set(allow_hits))
+        print(f"[安全阀] 基础设施白名单拦截 {len(allow_hits)} 次、{len(uniq)} 个域名"
+              f"（上游想封 GitHub / jsDelivr 之类，已放行）: {', '.join(uniq[:12])}")
     print(f"[安全阀] IP 规则: 跳过私有/保留段 {ip_stat['skipped_private']} 条, "
           f"跳过过大网段 {ip_stat['skipped_broad']} 条")
+    print(f"[安全阀] 带路径的 AdGuard 规则（域名层无法表达，已丢弃）: "
+          f"{path_stat['skipped_path_rule']} 条")
 
 
 if __name__ == "__main__":
