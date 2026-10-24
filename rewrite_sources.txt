@@ -39,3 +39,13 @@ https://raw.githubusercontent.com/fmz200/wool_scripts/main/QuantumultX/rewrite/w
 https://github.com/fmz200/wool_scripts/raw/main/QuantumultX/rewrite/cleanup.snippet
 https://github.com/app2smile/rules/raw/master/module/tieba-qx.conf
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/script/zheye/zheye.snippet
+#
+# ===== 综合去广告重写大集（2026-10 新增，已逐个审计内容纯净度）=====
+# 这三份都是「应用内广告」专用清单，不含会员破解/Cookie 抓取类脚本，
+# 已在 build.py 里按行去重，与上面墨鱼各源重叠部分会自动折叠。
+# blackmatrix7 广告重写（Quantumult X 原生，约 750 条，覆盖国内外主流 App）
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rewrite/QuantumultX/Advertising/Advertising.conf
+# deezertidal 去广告（约 260 条，精炼）
+https://raw.githubusercontent.com/deezertidal/QuantumultX-Rewrite/master/rewrite/AdBlock.conf
+# Moli-X 去广告大集（约 1200 条，量大，与上面两份有重叠）
+https://raw.githubusercontent.com/Moli-X/Resources/main/Rewrite/ADBlock.conf

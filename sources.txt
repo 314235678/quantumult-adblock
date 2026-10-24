@@ -3,14 +3,40 @@
 # build.py 在生成 adblock.list 时会逐个抓取并自动转换为 Quantumult X 规则。
 # 抓取失败的行会被跳过，不影响本地 custom.txt 生成的规则。
 # 每行一个 URL；# 开头为注释。
+#
+# 选源原则：宁精不滥。
+#   · Quantumult X 每次启动都要把全部规则载入内存并逐条匹配，
+#     规则数超过约 5 万条后，低端机会明显卡顿、耗电上升；
+#   · 所以这里只收「10k~20k 量级、维护活跃、误杀率低」的清单，
+#     200k 级别的巨无霸列表放在文件末尾，需要时自行开启。
 # ============================================================
 
-# AdGuard 基础广告服务器清单（覆盖面广：网页 + App 横幅/SDK 广告）
+# ---------- 1. 广告服务器基础清单（网页 + App 横幅/SDK 广告）----------
 https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt
 
-# Apple 广告/追踪专用清单（与本地 custom.txt 互补，质量高）
+# ---------- 2. blackmatrix7 广告规则（Quantumult X 原生格式，约 1.6 万条）----------
+# 中文 App 覆盖最好的一份，含 HOST-SUFFIX / HOST-KEYWORD / IP-CIDR 三种类型。
+# 注意：本文件同时包含大量 IP-CIDR 条目，build.py 会过滤私有网段与超大网段后再收录。
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list
+
+# ---------- 3. 217heidai 广告过滤规则（AdGuard 格式，约 1.2 万条）----------
+# 由多份国际清单合成，更新频繁，对境外广告 SDK 覆盖较好，与第 2 项互补。
+https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt
+
+# ---------- 4. Apple 广告/追踪专用清单 ----------
 https://raw.githubusercontent.com/froggeric/DNS-blocklists/main/NoAppleAds
 
-# 以下为超大型列表（约 29 万条），覆盖极广但会显著拖慢 Quantumult X，
-# 仅在你的设备性能足够、且追求"极限全面"时取消注释启用：
-# https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list
+# ============================================================
+# 可选：超大型清单（默认关闭）
+# 开启后规则数会涨到 5 万~20 万条，覆盖面更广，但 Quantumult X 启动变慢、
+# 内存占用上升，续航也会受影响。仅在追求「极限全面」时按需启用其中一份即可。
+#
+# 反广告 anti-AD（约 11 万条，中文站点覆盖极强）
+# https://anti-ad.net/domains.txt
+#
+# hagezi pro（约 20 万条，国际公认质量最高的一档）
+# https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt
+#
+# oisd small（约 5.9 万条，体积与效果平衡较好的轻量选择）
+# https://small.oisd.nl/
+# ============================================================

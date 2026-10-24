@@ -4,6 +4,17 @@ on:
   schedule:
     # 每天 UTC 16:00（北京时间 00:00）自动重建清单
     - cron: "0 16 * * *"
+  push:
+    branches: [main]
+    # 只有「规则源/构建脚本」变化才重建；生成产物本身不在列表里，避免自激循环
+    paths:
+      - "custom.txt"
+      - "sources.txt"
+      - "rewrite_sources.txt"
+      - "wechat_rewrite.conf"
+      - "build.py"
+      - "verify.py"
+      - ".github/workflows/update.yml"
   workflow_dispatch: {}
 
 permissions:
@@ -23,6 +34,10 @@ jobs:
 
       - name: Build adblock.list / rewrite.list
         run: python3 build.py
+
+      - name: Verify build output
+        # 防止上游集体抽风时把空清单或坏规则推给订阅者
+        run: python3 verify.py
 
       - name: Commit if changed
         run: |
