@@ -107,6 +107,11 @@ gx.qq.com
 tdbank.qq.com
 isdspeed.qq.com
 analytics.weixin.qq.com
+# 收钱吧小程序广告（纯广告域，可安全拒绝）
+ads-shopping.shouqianba.com
+# 注意：wxsnsdy.wxs.qq.com / wxsnsdythumb.wxs.qq.com / wxsmsdy.video.qq.com
+# 是微信生态的广告素材 CDN，有人反馈同时承载朋友圈图片/视频。
+# 是否拒绝存在争议，故不默认加入；要试请在 wechat_rewrite.conf 末尾风险区开启并观察。
 
 # ===================== 百度 广告 / 分析 =====================
 cpro.baidu.com

@@ -21,16 +21,16 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Build adblock.list
+      - name: Build adblock.list / rewrite.list
         run: python3 build.py
 
       - name: Commit if changed
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain adblock.list)" ]; then
-            git add adblock.list
-            git commit -m "chore: auto-update adblock.list [skip ci]"
+          if [ -n "$(git status --porcelain adblock.list rewrite.list)" ]; then
+            git add adblock.list rewrite.list
+            git commit -m "chore: auto-update adblock.list + rewrite.list [skip ci]"
             git push
           else
             echo "No changes."

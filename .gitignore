@@ -3,3 +3,4 @@ quantumult_merged_*.conf
 quantumult_source.conf
 merge_conf.py
 *.local
+__pycache__/

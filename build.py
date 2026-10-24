@@ -29,6 +29,17 @@ SOURCES_FILE = os.path.join(HERE, "sources.txt")
 OUTPUT_FILE = os.path.join(HERE, "adblock.list")
 REWRITE_SOURCES_FILE = os.path.join(HERE, "rewrite_sources.txt")
 REWRITE_OUTPUT = os.path.join(HERE, "rewrite.list")
+# 本地固化的重写源（优先级最高，排在最前）：微信生态去广告
+REWRITE_LOCAL_FILE = os.path.join(HERE, "wechat_rewrite.conf")
+
+# 需要从合并结果里剔除的上游重写行（按正则匹配，命中即丢弃）
+# 说明：ddgksf2013 / fmz200 的 getappmsgad 旧写法是把响应体里的 "advertisement"
+# 字符串整体替换成作者名，属于破坏性 hack，作者本人已标注【已失效】；而且它排在
+# chxm1023 那条真正有效的 script-response-body 规则前面，会抢占同一个 URL，
+# 导致公众号文章去广告实际不生效。故统一剔除，只保留有效实现。
+REWRITE_DROP_PATTERNS = [
+    re.compile(r"getappmsgad.*response-body\s+advertisement\s+response-body", re.I),
+]
 
 IP_RE = re.compile(r"^\d{1,3}(\.\d{1,3}){3}(/\d{1,2})?$")
 DOMAIN_RE = re.compile(r"^(?:[a-z0-9*](?:[a-z0-9-*]*[a-z0-9])?\.)+[a-z]{2,}$", re.I)
@@ -180,20 +191,62 @@ def load_sources():
             print(f"[跳过] 上游抓取失败，已忽略: {url}  ({e})")
 
 
+def _drop_reason(line: str):
+    """返回该行被剔除的原因；None 表示保留。"""
+    for pat in REWRITE_DROP_PATTERNS:
+        if pat.search(line):
+            return f"命中剔除规则 {pat.pattern[:40]}"
+    return None
+
+
 def build_rewrite():
-    """抓取墨鱼(ddgksf2013)各 App 重写规则，合并为单条订阅用的 rewrite.list。
-    任何来源抓取失败都跳过，保证已有 rewrite.list 不被清空。"""
-    if not os.path.exists(REWRITE_SOURCES_FILE):
-        return
-    urls = []
-    with open(REWRITE_SOURCES_FILE, "r", encoding="utf-8") as f:
-        for line in f:
-            line = line.split("#", 1)[0].strip()
-            if line and line.startswith("http"):
-                urls.append(line)
-    if not urls:
-        return
+    """合并重写规则为单条订阅用的 rewrite.list。
+
+    合并顺序：本地固化源(wechat_rewrite.conf) → rewrite_sources.txt 中的各上游。
+    本地源排最前，保证关键规则不被上游抢占；合并时做两件事：
+      1) 按 REWRITE_DROP_PATTERNS 剔除上游已失效/破坏性的行；
+      2) 全局按行去重，避免同一个 URL 被多条规则同时匹配。
+    任何来源抓取失败都跳过，保证已有 rewrite.list 不被清空。
+    """
     blocks = []
+    seen = set()
+    dropped = []
+
+    def collect(label, text):
+        kept = []
+        for raw in text.splitlines():
+            s = raw.strip()
+            if not s:
+                continue
+            reason = _drop_reason(s)
+            if reason:
+                dropped.append((label, s, reason))
+                continue
+            if s in seen:
+                continue
+            seen.add(s)
+            kept.append(s)
+        return kept
+
+    # ① 本地固化源优先
+    if os.path.exists(REWRITE_LOCAL_FILE):
+        with open(REWRITE_LOCAL_FILE, "r", encoding="utf-8") as f:
+            cleaned = sanitize_rewrite(f.read(), "wechat_rewrite.conf")
+        if cleaned:
+            kept = collect("wechat_rewrite.conf", cleaned)
+            blocks.append("# ===== source: 本地固化 · 微信生态去广告 (wechat_rewrite.conf) =====\n"
+                          + "\n".join(kept) + "\n")
+            print(f"[OK] 已合并本地源: wechat_rewrite.conf  ({len(kept)} 行)")
+
+    # ② 上游各源
+    urls = []
+    if os.path.exists(REWRITE_SOURCES_FILE):
+        with open(REWRITE_SOURCES_FILE, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.split("#", 1)[0].strip()
+                if line and line.startswith("http"):
+                    urls.append(line)
+
     for url in urls:
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
@@ -202,14 +255,22 @@ def build_rewrite():
             cleaned = sanitize_rewrite(txt, url)
             if cleaned is None:
                 continue
-            blocks.append(f"# ===== source: {url} =====\n" + cleaned.rstrip() + "\n")
-            print(f"[OK] 已合并重写: {url}  ({len(cleaned)}B)")
+            kept = collect(url, cleaned)
+            if not kept:
+                print(f"[跳过] 清洗后无有效行: {url}")
+                continue
+            blocks.append(f"# ===== source: {url} =====\n" + "\n".join(kept) + "\n")
+            print(f"[OK] 已合并重写: {url}  ({len(kept)} 行)")
         except Exception as e:
             print(f"[跳过] 重写抓取失败，已忽略: {url}  ({e})")
+
+    for label, line, reason in dropped:
+        print(f"[剔除] {label}: {reason} -> {line[:90]}")
+
     if blocks:
         with open(REWRITE_OUTPUT, "w", encoding="utf-8") as f:
             f.write("\n".join(blocks) + "\n")
-        print(f"[完成] 重写清单共 {len(blocks)} 个来源 -> {REWRITE_OUTPUT}")
+        print(f"[完成] 重写清单共 {len(blocks)} 个来源，{len(seen)} 条去重后规则 -> {REWRITE_OUTPUT}")
 
 
 def main():

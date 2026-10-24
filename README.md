@@ -22,7 +22,8 @@
 | `custom.txt` | 本地自定义域名层（按 App 分类，可随意增删） |
 | `sources.txt` | ① 的上游合并源（AdGuard 基础广告清单 + Apple 专用清单） |
 | `rewrite_sources.txt` | ② 的上游合并源（墨鱼 18 个 App 重写规则链接） |
-| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt 合并去重，生成 adblock.list 与 rewrite.list |
+| `wechat_rewrite.conf` | **③ 微信生态专用层**（本地固化，优先级最高）：公众号文章去广告 + 50 余条小程序去广告 |
+| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt / wechat_rewrite.conf 合并去重，生成 adblock.list 与 rewrite.list |
 | `.github/workflows/update.yml` | 每日自动重建 adblock.list 与 rewrite.list（定时更新） |
 | `quantumult-snippet.conf` | 直接贴进 Quantumult X 配置文件的订阅片段（仅两条链接） |
 
@@ -99,8 +100,18 @@ python3 build.py
 - **抖音 / TikTok 信息流广告**：目前**没有可靠的规则**能清掉（墨鱼也没有抖音专用规则）。
   原因是抖音的信息流广告与正常视频走**同一接口、且启用了证书锁定**，无法区分也无法拦截，
   强行拦会刷不出内容。只能靠 App 内"减少个性化推荐"等开关缓解。
-- **微信朋友圈 / 公众号信息流广告**：微信小程序广告、部分界面广告可被墨鱼 `Applet.conf` 等
-  复写去除；但**公众号图文信息流广告的复写规则已失效**（墨鱼标注），目前无解。
+- **微信朋友圈广告**：**做不到**，不是规则没写对，是原理上行不通。
+  朋友圈信息流走微信自研的 **mmtls 私有协议**（在 TLS 1.3 草案上魔改，公钥内置、不校验证书链，
+  外层再用业务层二次加密），Quantumult X 的 MITM 只能拿到密文，规则层没有切入点。
+  网上流传的"圈X去朋友圈广告"规则，要么是引流，要么是顺手把朋友圈图片 CDN（`wxsnsdy.wxs.qq.com`）
+  一起 reject —— 广告没了，图也没了。
+- **微信公众号信息流广告**：**做不到**。与正常文章走同一接口、服务端下发，无法区分。
+  公众号**文章内**广告是另一回事，见下方（可去除）。
+- **微信小程序广告**：**可去除**。已在 `wechat_rewrite.conf` 固化 50 余条接口级规则，
+  覆盖企迈点单、永辉、多点、星巴克、麦当劳、必胜客、猫眼、横店、顺丰、申通、中通、
+  滴滴、罗森、M Stand、享道、拼多多、哈啰等；但小程序**开屏广告需逐个适配**，
+  没有通用解。想更彻底可在微信里开「青少年模式」，iOS 实测能去掉小程序开屏与文章内广告。
+
 - **Telegram**：设计上几乎无广告（仅频道"赞助消息"走主接口），网络拦截收益极低，不拦。
 - **X / Twitter 推广推文**：推广推文与正常时间线同接口（`api.twitter.com`），
   域名层只能拦掉 `ads-twitter.com` / `analytics.twitter.com` 等可分离的广告/统计域名，
@@ -118,3 +129,40 @@ python3 build.py
 - 想接更全的上游：编辑 `sources.txt`（已注释掉一个约 29 万条的超大型列表，
   按需启用，但会拖慢 Quantumult X）。
 - 误伤了某个正常功能：把对应域名从 `custom.txt` 删除并重建即可。
+
+---
+
+## 七、微信去广告专项（`wechat_rewrite.conf`）
+
+微信生态的规则单独固化在 `wechat_rewrite.conf`，由 `build.py` **优先合并到 `rewrite.list` 最前面**。
+单独放本地而不是订阅上游，是为了三件事：
+
+**1. 修掉上游"已失效却抢占 URL"的坏规则**
+
+`mp.weixin.qq.com/mp/getappmsgad` 这个接口，之前被 **4 条规则同时匹配**：
+
+| 来源 | 写法 | 状态 |
+|------|------|------|
+| ddgksf2013 `Applet.conf` | `response-body advertisement → 替换成作者名` | 作者标注【已失效】 |
+| ddgksf2013 `WeChat.conf` | 同上 | 作者标注【已失效】 |
+| fmz200 `rewrite.snippet` | 同上 | 破坏性 hack |
+| chxm1023 `AppAd.conf` | `script-response-body wxgzhad.js` | ✅ 真正有效 |
+
+前三条排在前面，会把第四条盖住，导致公众号文章去广告**实际不生效**。
+现在 `build.py` 用 `REWRITE_DROP_PATTERNS` 把前三条统一剔除，并对全量规则**按行去重**，
+同一个 URL 只保留一条规则。
+
+**2. 补齐仓库缺失的小程序规则**
+
+从 `fmz200/wool_scripts` 的 `WeChatMiniAds.plugin` 转换并筛选出 50 余条接口级规则
+（已按 Quantumult X 语法修正，并把上游没转义的 `?` 正确转义）。
+
+**3. 隔离高风险规则**
+
+上游同批规则里有 9 条是「整站 / 整段 CDN / 首页主接口」级 reject，开了会打断正常功能
+（极兔整站、哈啰整站、货拉拉图片 CDN、如家首页三接口等）。这些统一移到文件末尾的
+**风险区**并默认注释，需要时自行开启。
+
+> 文件内还有微信广告素材 CDN（`wxsnsdy.wxs.qq.com` 等）三条，因有人反馈会影响朋友圈图片加载，
+> 同样默认注释并附了验证方法。
+

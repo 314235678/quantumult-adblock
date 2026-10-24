@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 1432
+# COUNT: 1433
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
 HOST-SUFFIX,0xclicks.com,REJECT
@@ -104,6 +104,7 @@ HOST-SUFFIX,adrino.cloud,REJECT
 HOST-SUFFIX,adrino.pl,REJECT
 HOST-SUFFIX,ads-api.twitter.com,REJECT
 HOST-SUFFIX,ads-blocker-1.static-cloudflare.workers.dev,REJECT
+HOST-SUFFIX,ads-shopping.shouqianba.com,REJECT
 HOST-SUFFIX,ads-twitter.com,REJECT
 HOST-SUFFIX,ads.123net.jp,REJECT
 HOST-SUFFIX,ads.avocet.io,REJECT
