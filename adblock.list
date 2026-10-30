@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 20451 (HOST-SUFFIX 19632 / HOST-KEYWORD 276 / IP-CIDR 543)
+# COUNT: 20453 (HOST-SUFFIX 19634 / HOST-KEYWORD 276 / IP-CIDR 543)
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
 HOST-KEYWORD,-logging.nextmedia.com,REJECT
@@ -7385,6 +7385,7 @@ HOST-SUFFIX,goo.ne.jp,REJECT
 HOST-SUFFIX,goo2anywhere.com,REJECT
 HOST-SUFFIX,goobakocaup.com,REJECT
 HOST-SUFFIX,goodmeasure.io,REJECT
+HOST-SUFFIX,goodpics.net,REJECT
 HOST-SUFFIX,goodsstor.vip,REJECT
 HOST-SUFFIX,goodtag.it,REJECT
 HOST-SUFFIX,google-analyticals.com,REJECT
@@ -13949,6 +13950,7 @@ HOST-SUFFIX,refatxhcuu.com,REJECT
 HOST-SUFFIX,referback.com,REJECT
 HOST-SUFFIX,referrer.website,REJECT
 HOST-SUFFIX,referwhen.com,REJECT
+HOST-SUFFIX,reflecting-nature.com,REJECT
 HOST-SUFFIX,reflethenfortoft.info,REJECT
 HOST-SUFFIX,refpakrtsb.top,REJECT
 HOST-SUFFIX,refpamjeql.top,REJECT
