@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 20455 (HOST-SUFFIX 19636 / HOST-KEYWORD 276 / IP-CIDR 543)
+# COUNT: 20460 (HOST-SUFFIX 19641 / HOST-KEYWORD 276 / IP-CIDR 543)
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
 HOST-KEYWORD,-logging.nextmedia.com,REJECT
@@ -1246,6 +1246,7 @@ HOST-SUFFIX,access.watchmygirlfriend.tv,REJECT
 HOST-SUFFIX,accomment.pro,REJECT
 HOST-SUFFIX,accountestatees.info,REJECT
 HOST-SUFFIX,accounts.pkr.com,REJECT
+HOST-SUFFIX,accountut.com,REJECT
 HOST-SUFFIX,acf-webmaster.net,REJECT
 HOST-SUFFIX,acgbenzi.com,REJECT
 HOST-SUFFIX,achdebit.com,REJECT
@@ -3007,6 +3008,7 @@ HOST-SUFFIX,beineiros.xyz,REJECT
 HOST-SUFFIX,beixisys.com,REJECT
 HOST-SUFFIX,bejotlmrijxvor.com,REJECT
 HOST-SUFFIX,beldiplomcom.75.com1.ru,REJECT
+HOST-SUFFIX,bellnewyork.org,REJECT
 HOST-SUFFIX,belmonhezamil.pro,REJECT
 HOST-SUFFIX,belvertising.be,REJECT
 HOST-SUFFIX,bemail.it,REJECT
@@ -7760,6 +7762,7 @@ HOST-SUFFIX,hellporno.com,REJECT
 HOST-SUFFIX,heloymydva.com,REJECT
 HOST-SUFFIX,helpclause.com,REJECT
 HOST-SUFFIX,helpful-web.com,REJECT
+HOST-SUFFIX,helpfulmaple.com,REJECT
 HOST-SUFFIX,hemmieconverset.info,REJECT
 HOST-SUFFIX,hemonledriat.pro,REJECT
 HOST-SUFFIX,hen360.com,REJECT
@@ -8658,6 +8661,7 @@ HOST-SUFFIX,investhash.com,REJECT
 HOST-SUFFIX,invite.linescale.com,REJECT
 HOST-SUFFIX,invocacdn.com,REJECT
 HOST-SUFFIX,inwatrrcziyuet.com,REJECT
+HOST-SUFFIX,inyourpocket.co.uk,REJECT
 HOST-SUFFIX,io1g.net,REJECT
 HOST-SUFFIX,ioahdio.com,REJECT
 HOST-SUFFIX,iochuhah.com,REJECT
@@ -10297,6 +10301,7 @@ HOST-SUFFIX,lyzon.com.cn,REJECT
 HOST-SUFFIX,lzcei.com,REJECT
 HOST-SUFFIX,lzfqxxtgyydrc.com,REJECT
 HOST-SUFFIX,lzfyahjavcik.com,REJECT
+HOST-SUFFIX,lzopmoas.in,REJECT
 HOST-SUFFIX,lzowrfhqy.com,REJECT
 HOST-SUFFIX,lzpgstae.com,REJECT
 HOST-SUFFIX,lzpv4rsmat.com,REJECT
