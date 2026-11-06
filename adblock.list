@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 20463 (HOST-SUFFIX 19644 / HOST-KEYWORD 276 / IP-CIDR 543)
+# COUNT: 20466 (HOST-SUFFIX 19647 / HOST-KEYWORD 276 / IP-CIDR 543)
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
 HOST-KEYWORD,-logging.nextmedia.com,REJECT
@@ -4496,6 +4496,7 @@ HOST-SUFFIX,contribusourcesyndication.com,REJECT
 HOST-SUFFIX,control.teragence.net,REJECT
 HOST-SUFFIX,controller.duokanbox.com,REJECT
 HOST-SUFFIX,controversychilly.com,REJECT
+HOST-SUFFIX,contuselegator.com,REJECT
 HOST-SUFFIX,convergeselect.net,REJECT
 HOST-SUFFIX,conversionsbox.com,REJECT
 HOST-SUFFIX,convertap.com,REJECT
@@ -5606,6 +5607,7 @@ HOST-SUFFIX,dvuneqnrkukud.com,REJECT
 HOST-SUFFIX,dvv.lkgtvc.xyz,REJECT
 HOST-SUFFIX,dvv.muyfgf.xyz,REJECT
 HOST-SUFFIX,dvvkdxejwh.com,REJECT
+HOST-SUFFIX,dvwztnx4ab3fl.cloudfront.net,REJECT
 HOST-SUFFIX,dw.cbsi.com,REJECT
 HOST-SUFFIX,dw.cbsimg.net,REJECT
 HOST-SUFFIX,dw.com.com,REJECT
@@ -16339,6 +16341,7 @@ HOST-SUFFIX,trafinfo.info,REJECT
 HOST-SUFFIX,trafiz.net,REJECT
 HOST-SUFFIX,traktor.ru,REJECT
 HOST-SUFFIX,tralifa.info,REJECT
+HOST-SUFFIX,trambelongedallure.com,REJECT
 HOST-SUFFIX,tranite.info,REJECT
 HOST-SUFFIX,transfermarkt.com.tr,REJECT
 HOST-SUFFIX,trapasol.com,REJECT
