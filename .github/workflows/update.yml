@@ -9,6 +9,7 @@ on:
     # 只有「规则源/构建脚本」变化才重建；生成产物本身不在列表里，避免自激循环
     paths:
       - "custom.txt"
+      - "allowlist.txt"
       - "sources.txt"
       - "rewrite_sources.txt"
       - "wechat_rewrite.conf"
@@ -36,7 +37,6 @@ jobs:
 
       - name: Build adblock.list / rewrite.list
         run: python3 build.py
-
       - name: Verify build output
         # 防止上游集体抽风时把空清单或坏规则推给订阅者
         run: python3 verify.py
@@ -52,9 +52,10 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          if [ -n "$(git status --porcelain adblock.list rewrite.list)" ]; then
-            git add adblock.list rewrite.list
-            git commit -m "chore: auto-update adblock.list + rewrite.list [skip ci]"
+          OUTPUTS="adblock.list rewrite.list adblock-lite.list adblock-ip.list"
+          if [ -n "$(git status --porcelain $OUTPUTS)" ]; then
+            git add $OUTPUTS
+            git commit -m "chore: auto-update rule lists [skip ci]"
             git push
           else
             echo "No changes."

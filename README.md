@@ -18,14 +18,17 @@
 | 文件 | 作用 |
 |------|------|
 | `adblock.list` | **① 域名拒绝层最终清单**（Quantumult X 直接订阅这个文件，无需 MITM） |
+| `adblock-lite.list` | **① 的精简版**：只留 `custom.txt` + `blackmatrix7` 两个中文 App 覆盖最好的来源，体积约 1/4，误杀率最低。**第一次用建议先订阅这个** |
+| `adblock-ip.list` | **① 的 IP 补充层**：裸 IP 广告服务器拦截，默认不订阅（单 IP 规则收益低、误伤不可控、拖慢连接判定） |
 | `rewrite.list` | **② 应用内去广告层最终清单**（多源合并版，需 MITM，单条订阅） |
 | `custom.txt` | 本地自定义域名层（按 App 分类，可随意增删） |
+| `allowlist.txt` | **功能豁免清单（最高优先级）**：圈定"宁可漏拦、不可错杀"的业务域名，任何上游都封不到。京东那类"规则一开 App 就没网"的问题靠它根治 |
 | `sources.txt` | ① 的上游合并源（AdGuard 基础清单 + blackmatrix7 广告规则 + 217heidai 广告过滤 + Apple 专用清单） |
 | `rewrite_sources.txt` | ② 的上游合并源（墨鱼 + 黑名单7 + deezertidal + Moli-X + chxm1023 + fmz200 + app2smile 等 30 个） |
 | `wechat_rewrite.conf` | **③ 微信生态专用层**（本地固化，优先级最高）：公众号文章去广告 + 50 余条小程序去广告 |
 | `script_fixes.txt` | **④ 失效脚本地址修复表**：上游脚本被删/换目录时，重定向到可用镜像或丢弃，直接消灭 QX 的「N 个问题存在于子资源」 |
-| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt / wechat_rewrite.conf 合并、去重、冲突裁决、应用脚本修复，生成 adblock.list 与 rewrite.list |
-| `verify.py` | **构建产物校验**：数量下限、语法合法性、私有 IP 段、过宽关键词、规则冲突、HTML 污染、订阅域名自洽性 |
+| `build.py` | 把 custom.txt + sources.txt / rewrite_sources.txt / wechat_rewrite.conf 合并、去重、冲突裁决、应用豁免与脚本修复，生成 4 个产物。支持 `--offline`（无外网时基于现有产物重新规范化） |
+| `verify.py` | **构建产物校验**：数量下限、语法合法性、私有 IP 段、过宽关键词、规则冲突、HTML 污染、订阅域名自洽性、**功能豁免泄漏、关键词写成整域、MitM 域名上限** |
 | `check_scripts.py` | **脚本存活检查**：逐个请求重写脚本，找出 404 并统计牵连多少条规则 |
 | `.github/workflows/update.yml` | 定时 + 规则源变更时自动重建并校验，通过后提交回仓库 |
 | `quantumult-snippet.conf` | 直接贴进 Quantumult X 配置文件的订阅片段（仅两条链接） |
@@ -185,15 +188,30 @@ python3 build.py && python3 verify.py
 
 | 清单 | 规模 | 构成 |
 |------|------|------|
-| `adblock.list` | 约 2.07 万条 | HOST-SUFFIX 约 2.0 万 + HOST-KEYWORD 约 270 + IP-CIDR 约 570 |
-| `rewrite.list` | 约 3200 条有效规则 | 31 个上游 + 1 个本地固化层，去重后；MitM 域名约 1500 个 |
+| `adblock.list` | 约 2.0 万条 | HOST-SUFFIX 约 2.0 万 + HOST-KEYWORD 约 140，**已不含 IP 规则** |
+| `adblock-lite.list` | 约合并后的 1/4 | 仅 custom.txt + blackmatrix7 |
+| `adblock-ip.list` | 约 540 条 | 裸 IP 拦截，默认不订阅 |
+| `rewrite.list` | 约 3200 条有效规则 | 28 个来源，去重后；**MitM 域名封顶 1200 个** |
 
 这个量级是刻意控制的：Quantumult X 启动时要把全部规则载入内存逐条匹配，
 **5 万条以上**在低端机上会出现启动变慢、滚动掉帧、续航下降。如果你想要更极致的覆盖，
 `sources.txt` 末尾有 anti-AD / hagezi / oisd 可选源，但请一次只开一个，并自行观察耗电。
 
-嫌 3 万条太多？把 `sources.txt` 里的「217heidai」或「blackmatrix7」注释掉任意一条，
-规模会回到 1.5 万条左右，覆盖仍然远超改造前的 1400 条。
+### IP 规则为什么被移出主包
+
+几百条 `IP-CIDR,...,/32` 看着"更彻底"，实际是性价比最差的一层：
+
+- QX 对域名请求是**先匹配域名规则、未命中才解析 IP 去比 IP 规则**，几百条会让每次连接都多一次判定；
+- `/32` 是单个 IP，同一个 IP 上常同时挂着正常业务和广告。一旦某个 CDN IP 被拦，整个 App 就是白屏 —— 而日志里看不出任何域名规则命中，极难排查。
+
+所以它被单独放到 `adblock-ip.list`。确实需要时再订阅，出问题第一时间取消它。
+
+### 体积还会再涨一次（重要）
+
+`build.py` 之前有个解析 bug，导致 blackmatrix7 那份**中文 App 覆盖最好的清单一万多条被整份丢弃**（详见第九节）。
+修复后第一次联网构建，规则数会从 2.0 万涨到约 3 万。这不是变啰嗦，是本来该在的东西回来了。
+如果嫌大：把 `sources.txt` 里第 1 项（AdGuard 国际网页广告）注释掉，规模能回到 1.5 万条左右，
+且对国内 App 的开屏广告几乎没有影响 —— 那份清单主要服务于 Safari 里的境外网页广告。
 
 ---
 
@@ -214,10 +232,45 @@ python3 build.py && python3 verify.py
 | AdGuard **路径级**规则被当成整域规则 | `\|\|github.com/_private/browser/stats` 被转成 `HOST-SUFFIX,github.com,REJECT` —— **因为一条统计接口把整个 GitHub 封了** | 带 `/路径` 的规则一律丢弃（域名层无法精确表达），本轮丢弃 14360 条 |
 | AdGuard **修饰符**规则被兜底逻辑误判 | `$csp=... www.googletagmanager.com jsdelivr.net` 这类行被取末位 token，生成 `HOST-SUFFIX,jsdelivr.net,REJECT` —— **把 CDN 封了** | 删除「取末位 token 当域名」的兜底，无法识别的行一律丢弃 |
 | `jsonjq-response-body` / `echo-response` 等 QX 不支持的动作 | 导入订阅时 QX 报「N 个问题存在于子资源」并逐条忽略 | 建立动作白名单，白名单外全部剔除（本轮剔 38 条） |
+| **规则类型正则写成 `(?:HOST\|DOMAIN-SUFFIX\|DOMAIN\|HOST-KEYWORD)`** | 正则按顺序尝试，`HOST` 分支先命中、紧接着要求逗号却遇到 `HOST-SUFFIX` 里的短横线，整条匹配失败。`HOST-KEYWORD` 靠回溯侥幸命中，**`HOST-SUFFIX` 没有任何分支能覆盖 → blackmatrix7 那份一万多条的中文 App 清单被整份静默丢弃**。清单看着有 2 万条，其实全是国际网页广告域，国内 App 开屏广告自然拦不住 | 长 alternative 前置并显式分组，`HOST-SUFFIX` / `DOMAIN-SUFFIX` / `HOST-KEYWORD` / `DOMAIN-KEYWORD` / `HOST` / `DOMAIN` 全覆盖 |
+| `HOST-KEYWORD` 允许写成完整域名 | `HOST-KEYWORD,mapi.m.jd.com` 是**子串**匹配，等于把京东主 API 整个拒绝 | 语法上是完整域名的关键词自动降级为 `HOST-SUFFIX`；落在豁免域名内部的直接丢弃 |
+| 没有"业务域名"豁免层 | 上游无差别收录业务域名，`360buyimg.com`（京东图片 CDN）被整域拒绝 → App 全站白图 | 新增 `allowlist.txt`，域名层与 MitM 层双重豁免，优先级高于一切上游 |
+| MitM 域名无上限（曾达 1539 个） | 握手与内存开销上升，表现为随机「网络异常」，和规则误杀极难区分 | 封顶 1200，按来源优先级截断；已被域名层拒绝的域名不再占用 MitM 额度（省下 93 个） |
+| IP-CIDR 混在主包里 | 拖慢每次连接判定，且单个 IP 误伤不可排查 | 分离到 `adblock-ip.list`，默认不订阅 |
 
 ---
 
-## 十、事故记录：一次「去广告把自己订阅封掉」的事故
+## 十、事故记录：开屏广告又回来了 + 京东没网（2026-11）
+
+**现象一**：以前开着订阅没有开屏广告，最近开始出现了。
+**现象二**：开启订阅后**京东 App 直接没网**（白屏、加载不出、点了没反应），关掉订阅就恢复。
+
+**为什么这两件事是同一个根因**：
+`build.py` 的规则类型正则覆盖不到 `HOST-SUFFIX`（见第九节第一行）。
+blackmatrix7 是最懂中文 App 的那份清单，而它**恰恰全用 `HOST-SUFFIX` 写法** —— 于是：
+
+- 它的规则被整份丢弃 → 国内 App 的开屏广告没人拦 → 现象一；
+- 它里面**唯一能通过正则**的 `HOST-KEYWORD` 行活了下来，其中就有 `HOST-KEYWORD,mapi.m.jd.com` —— 一个子串匹配的"完整域名"，把京东主 API 连根拒绝 → 现象二。
+
+**叠加的第三刀**：`rewrite.list` 的 MitM 域名里有 `api.m.jd.com`、`dns.jd.com`、`img.360buyimg.com`。
+京东 App 对关键接口做了证书固定（SSL Pinning），被中间人解密后**直接拒绝连接**。
+这条最难查：规则里搜不到任何 `jd` 的 reject，日志看起来就是"网络异常"。
+
+**修复**（四层同时下手，缺一层都会复发）：
+
+1. `parse_line` 正则修正，长 alternative 前置 → blackmatrix7 的一万多条回归；
+2. `HOST-KEYWORD` 若语法上是完整域名，自动降级为 `HOST-SUFFIX`（本轮降级 133 条）；
+3. 新增 `allowlist.txt` 功能豁免层：`jd.com` / `360buyimg.com` / `3.cn`
+   既不进域名拒绝层，也不进 MitM 列表（本轮放行 14 个域名、剔除 MitM 里 30 余个京东域名）；
+4. `verify.py` 增加三项防回归检查：豁免域名泄漏、关键词写成整域、MitM 域名超限。
+
+**取舍说明**：`jd.com` 全域豁免后，**京东自己的开屏广告也拦不掉了**。
+京东的广告和业务接口同域，域名层无法区分，只能功能优先。
+同理，如果哪天某个 App 突然"没网"，把它主域加进 `allowlist.txt` 是最快的自救方式。
+
+---
+
+## 十一、事故记录：一次「去广告把自己订阅封掉」的事故
 
 **现象**：订阅本仓库的 `rewrite.list` 后，QX 提示「58 个问题存在于子资源」；
 随后**其他所有订阅都显示「无法连接服务器」**。取消勾选重写层仍不恢复，取消勾选**分流层**才恢复。
@@ -247,7 +300,7 @@ python3 build.py && python3 verify.py
 
 ---
 
-## 十一、QX 提示「N 个问题存在于子资源」怎么办
+## 十二、QX 提示「N 个问题存在于子资源」怎么办
 
 这个提示跟规则语法无关，**指的是重写规则引用的脚本下载不回来**。点进资源详情能看到每条都标注
 `Status code 404 / 需要更新`。

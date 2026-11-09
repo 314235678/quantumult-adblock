@@ -14,6 +14,10 @@ CI 里跑一次，防止上游抽风时把空清单或坏规则推给订阅者�
   E. rewrite.list 有效行数量下限 + 每行语法合法
   F. 公众号去广告必须只剩一条有效规则（曾经的冲突 bug 回归检查）
   G. 不得混入 HTML 网页内容
+  H. 功能豁免域名（allowlist.txt）不得泄漏到域名层与 MitM 层
+  I. HOST-KEYWORD 不得写成完整域名（子串匹配会打穿整个业务域）
+  J. IP-CIDR 不应出现在主包（默认分离到 adblock-ip.list）
+  K. MitM 域名总量不得超过上限
 
 用法：python3 verify.py   （全部通过返回 0，否则返回 1）
 """
@@ -231,6 +235,79 @@ mitm_bad = sorted(
 if mitm_bad:
     err(f"MitM 覆盖了订阅托管域名（会导致订阅更新异常）: {mitm_bad}")
 print(f"[信息] MitM 域名共 {len(mitm_hosts)} 个，覆盖订阅托管域名的: {len(mitm_bad)} 个")
+
+# ---------------- H~K：功能豁免与解析层回归 ----------------
+# 这一组检查来自 2026-11 的「京东没网」事故：
+#   1) 域名层把 360buyimg.com（京东图片 CDN）整域拒绝 → App 全站白图
+#   2) HOST-KEYWORD 写成完整域名 mapi.m.jd.com → 子串匹配打穿京东主 API
+#   3) MitM 列表含 api.m.jd.com / dns.jd.com → 京东证书固定，直接连接失败
+#   三层任缺一层都会复发，所以三层都要验。
+import build as B  # noqa: E402
+
+B.load_allowlist()
+
+if B.ALLOW_FULL:
+    allow_hit = []
+    for l in lines:
+        if not (l.startswith("HOST-SUFFIX,") or l.startswith("HOST-KEYWORD,")):
+            continue
+        parts = l.split(",")
+        if len(parts) < 2:
+            continue
+        val = parts[1].strip().lower()
+        if any(val == a or val.endswith("." + a) or (len(val) >= 4 and val in a)
+               for a in B.ALLOW_FULL):
+            allow_hit.append(l)
+    if allow_hit:
+        err(f"域名层仍在拦功能豁免域名，对应 App 会表现为「没网」: {allow_hit[:5]}")
+
+    allow_mitm = sorted(
+        h for h in mitm_hosts
+        if any(h == a or h.endswith("." + a) for a in (B.ALLOW_FULL | B.ALLOW_MITM))
+    )
+    if allow_mitm:
+        err(f"MitM 仍覆盖功能豁免域名，做了证书固定的 App 会直接连不上: {allow_mitm[:5]}")
+    print(f"[信息] 功能豁免域名 {len(B.ALLOW_FULL)} 个（完全）+ {len(B.ALLOW_MITM)} 个（仅 MitM），"
+          f"泄漏到产物里的: {len(allow_hit) + len(allow_mitm)} 个")
+
+# HOST-KEYWORD 写成完整域名是典型的同域打穿，必须降级为 HOST-SUFFIX。
+# 注意：只判定「语法上就是完整域名」的关键词。
+#   -logging.nextmedia.com / a8clk. / .estream. 这类带前后缀锚点的关键词
+#   本身不是域名（前缀短横线表示"以某串结尾"，尾部点表示"以某串开头"），
+#   降级成 HOST-SUFFIX 反而会扩大打击面，属于正常写法。
+from build import DOMAIN_RE  # noqa: E402
+
+kw_as_domain = []
+for l in lines:
+    if not l.startswith("HOST-KEYWORD,"):
+        continue
+    kw = l.split(",")[1].strip().lower()
+    if kw.count(".") >= 1 and DOMAIN_RE.match(kw):
+        kw_as_domain.append(l)
+if kw_as_domain:
+    err(f"{len(kw_as_domain)} 条 HOST-KEYWORD 是完整域名写法，会连带封掉整个域，"
+        f"应降级为 HOST-SUFFIX: {kw_as_domain[:5]}")
+
+# IP 规则默认已分离到 adblock-ip.list，主包不该有
+ip_in_main = [l for l in lines if l.startswith("IP-CIDR")]
+if ip_in_main:
+    warn(f"主包含 {len(ip_in_main)} 条 IP-CIDR，会拖慢 QX 每次连接判定，"
+         f"建议分离到 adblock-ip.list 按需订阅")
+
+# MitM 域名总量上限：数量级失控时表现为随机「网络异常」，极难归因
+if len(mitm_hosts) > B.MITM_LIMIT:
+    err(f"MitM 域名 {len(mitm_hosts)} 个，超过上限 {B.MITM_LIMIT}，"
+        f"握手开销与内存占用会明显上升")
+
+# 域名层与 MitM 层自相矛盾（已拒绝的域名再 MITM 是纯浪费）
+rejected_hosts = {
+    l.split(",")[1].strip().lower()
+    for l in lines if l.startswith("HOST-SUFFIX,") and l.count(",") >= 2
+}
+wasted_mitm = sorted(h for h in mitm_hosts if h in rejected_hosts)
+if wasted_mitm:
+    infos.append(f"{len(wasted_mitm)} 个域名同时被域名层拒绝且配置了 MitM，"
+                 f"MitM 对它们无效，可清理: {wasted_mitm[:5]}")
 
 # ---------------- 输出 ----------------
 print("=" * 62)

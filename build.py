@@ -28,6 +28,16 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 CUSTOM_FILE = os.path.join(HERE, "custom.txt")
 SOURCES_FILE = os.path.join(HERE, "sources.txt")
 OUTPUT_FILE = os.path.join(HERE, "adblock.list")
+# 功能豁免清单：优先级高于一切上游，宁可漏拦不可错杀
+ALLOW_FILE = os.path.join(HERE, "allowlist.txt")
+# IP 规则单独成包（不进主包），理由见 ip_cidr_rule 注释
+IP_OUTPUT = os.path.join(HERE, "adblock-ip.list")
+# 精简包：只保留中文 App 覆盖最好的两个来源，体积小、误杀低，适合先跑通
+LITE_OUTPUT = os.path.join(HERE, "adblock-lite.list")
+# MitM 域名上限。超过后 QX 握手开销明显上升，弱机型会出现「网络异常」类怪问题。
+MITM_LIMIT = 1200
+# 离线模式：把现有产物当作唯一来源重新规范化，用于没有外网时验证新逻辑
+OFFLINE = False
 REWRITE_SOURCES_FILE = os.path.join(HERE, "rewrite_sources.txt")
 REWRITE_OUTPUT = os.path.join(HERE, "rewrite.list")
 # 本地固化的重写源（优先级最高，排在最前）：微信生态去广告
@@ -106,11 +116,69 @@ def _is_subscription_infra(h: str) -> bool:
     return any(h == a or h.endswith("." + a) for a in SUBSCRIPTION_INFRA)
 
 
-rules = set()  # 去重后的规则行
+# ---------------- 功能豁免层（allowlist.txt）----------------
+# 与 CRITICAL_ALLOW 的区别：
+#   CRITICAL_ALLOW 保护的是"项目自身能不能更新"（GitHub / jsDelivr 等基础设施）；
+#   这一层保护的是"用户的 App 能不能正常用"（京东这类业务域名）。
+# 两者都必须做，缺一个就会出现「规则能更新，但装了以后手机没法用」。
+ALLOW_FULL = set()   # 完全豁免：域名拒绝层与 MitM 都不碰
+ALLOW_MITM = set()   # 仅豁免 MitM：域名层仍可拒绝，但不做中间人解密
+allow_stat = {"full": 0, "mitm": 0, "blocked": []}
+
+
+def load_allowlist():
+    """读取 allowlist.txt。每行 '域名 [full|mitm]'，默认 full。"""
+    if not os.path.exists(ALLOW_FILE):
+        return
+    with open(ALLOW_FILE, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.split("#", 1)[0].strip()
+            if not line:
+                continue
+            parts = line.split()
+            d = parts[0].strip().lower().lstrip("*.").rstrip(".")
+            if not d:
+                continue
+            tag = parts[1].strip().lower() if len(parts) > 1 else "full"
+            if tag == "mitm":
+                ALLOW_MITM.add(d)
+            else:
+                ALLOW_FULL.add(d)
+
+
+def _host_matches(h: str, pool) -> bool:
+    """判断域名是否命中豁免池（含子域）。
+
+    注意 hostname 里存在 api.*.jd.com / img*.360buyimg.com 这类通配写法，
+    直接对原始字符串做后缀判断即可 —— 'api.*.jd.com'.endswith('.jd.com') 为真。
+    """
+    h = h.strip().lower().lstrip("*.").rstrip(".")
+    if not h:
+        return False
+    return any(h == a or h.endswith("." + a) for a in pool)
+
+
+def _is_allow_full(h: str) -> bool:
+    return _host_matches(h, ALLOW_FULL)
+
+
+def _needs_mitm_exempt(h: str) -> bool:
+    return _host_matches(h, ALLOW_FULL) or _host_matches(h, ALLOW_MITM)
+
+
+def _current_source() -> str:
+    return CURRENT_SOURCE
+
+
+# 当前正在解析的来源标签，仅用于生成 lite 包时的来源筛选与构建日志
+CURRENT_SOURCE = "custom.txt"
+
+rules = {}  # 去重后的规则行 -> 来源标签
 dropped_keywords = []  # 被安全阀拦下的关键词（用于构建日志）
 ip_stat = {"skipped_private": 0, "skipped_broad": 0}  # IP 规则安全阀统计
 path_stat = {"skipped_path_rule": 0}  # 因带路径无法表达而丢弃的规则数
 allow_hits = []  # 被基础设施白名单拦下的域名（用于构建日志）
+ip_rules = set()  # IP-CIDR 规则单独存，不进主包
 
 # Quantumult X 重写行合法的关键字（第 2 个空白分隔字段）
 REWRITE_KEYWORDS = {
@@ -247,7 +315,14 @@ def ip_cidr_rule(cidr: str):
     ):
         ip_stat["skipped_private"] += 1
         return
-    rules.add(f"IP-CIDR,{net},REJECT{IP_RULE_TAIL}")
+    # IP 规则单独存放到 adblock-ip.list，默认不并入主包。
+    # 原因（本次故障的第三条线索）：
+    #   · QX 对域名请求是先匹配域名规则、未命中才解析 IP 去比 IP 规则，
+    #     几百条 /32 会把每次连接都拖进一次额外判定，弱机型上表现为卡顿；
+    #   · /32 是"单个 IP"，同一个 IP 上常常同时挂着正常业务和广告，
+    #     收益极低而误伤面不可预测（某个 CDN IP 一挂，整个 App 白屏）。
+    # 结论：IP 层作为可选增强单独提供，默认不启用。
+    ip_rules.add(f"IP-CIDR,{net},REJECT{IP_RULE_TAIL}")
 
 
 def add_host_suffix(domain: str):
@@ -262,7 +337,14 @@ def add_host_suffix(domain: str):
     if _is_critical(d):
         allow_hits.append(d)
         return
-    rules.add(f"HOST-SUFFIX,{d},REJECT")
+    # 功能豁免层：命中即不生成拒绝规则。
+    # 这是"京东没网"的正面修复 —— 上游会持续推送 360buyimg.com 这类业务域，
+    # 只靠在产物里手删是撑不过下一次自动重建的，必须在生成阶段拦下。
+    if _is_allow_full(d):
+        allow_stat["full"] += 1
+        allow_stat["blocked"].append(d)
+        return
+    rules[f"HOST-SUFFIX,{d},REJECT"] = CURRENT_SOURCE
 
 
 def add_host_keyword(kw: str):
@@ -270,6 +352,16 @@ def add_host_keyword(kw: str):
     if not kw:
         return
     low = kw.lower()
+
+    # 修复一：关键词如果本身就是一个完整域名，必须降级为 HOST-SUFFIX。
+    # 关键词是子串匹配，"mapi.m.jd.com" 会把京东主 API 整个拒绝掉；
+    # 而上游确实这么写了，光靠长度和黑名单安全阀拦不住。
+    # 降级后语义更精确，也不会误伤 xxx.mapi.m.jd.com.evil.com 这种拼接域名。
+    if low.count(".") >= 1 and DOMAIN_RE.match(low):
+        add_host_suffix(low)
+        dropped_keywords.append(f"{kw}(降级为域名)")
+        return
+
     if len(kw) < KEYWORD_MIN_LEN or low in KEYWORD_DENY:
         dropped_keywords.append(kw)
         return
@@ -277,7 +369,12 @@ def add_host_keyword(kw: str):
     if any(low in a for a in CRITICAL_ALLOW):
         dropped_keywords.append(kw)
         return
-    rules.add(f"HOST-KEYWORD,{kw},REJECT")
+    # 修复二：关键词若落在功能豁免域名内部（如 360buy 之于 360buyimg.com），
+    # 同样会连带打穿豁免，直接丢弃。
+    if any(low in a for a in ALLOW_FULL):
+        dropped_keywords.append(f"{kw}(会打穿豁免域名)")
+        return
+    rules[f"HOST-KEYWORD,{kw},REJECT"] = CURRENT_SOURCE
 
 
 def parse_line(line: str):
@@ -322,11 +419,26 @@ def parse_line(line: str):
         add_host_suffix(m.group(1))
         return
 
-    # Quantumult X / Surge: HOST,domain,Policy  / DOMAIN-SUFFIX,domain,Policy
-    m = re.match(r"^(?:HOST|DOMAIN-SUFFIX|DOMAIN|HOST-KEYWORD),([^,]+),", s)
+    # Quantumult X / Surge / Clash 原生规则：
+    #   HOST-SUFFIX,domain,Policy   HOST,domain,Policy
+    #   DOMAIN-SUFFIX,domain,Policy DOMAIN,domain,Policy
+    #   HOST-KEYWORD,kw,Policy      DOMAIN-KEYWORD,kw,Policy
+    #
+    # ⚠️ 这里的正则曾经写成 (?:HOST|DOMAIN-SUFFIX|DOMAIN|HOST-KEYWORD)，
+    # 因为正则引擎按顺序尝试、且 "HOST" 会先被匹配到，紧接着要求逗号却遇到
+    # "HOST-SUFFIX" 里的短横线，整条就匹配失败了 —— HOST-KEYWORD 还能靠回溯
+    # 命中，而 HOST-SUFFIX 没有任何分支能覆盖。
+    # 后果：blackmatrix7 这类用 HOST-SUFFIX 写法的中文 App 清单被整份静默丢弃
+    # （一万多条），清单看起来"有 2 万条"其实全是国际网页广告域，
+    # 国内 App 的开屏广告自然拦不住。长 alternative 必须放在前面。
+    m = re.match(
+        r"^(HOST-SUFFIX|DOMAIN-SUFFIX|HOST-KEYWORD|DOMAIN-KEYWORD|HOST|DOMAIN)"
+        r",([^,]+),",
+        s, re.I,
+    )
     if m:
-        target = m.group(1).strip()
-        if s.upper().startswith("HOST-KEYWORD"):
+        kind, target = m.group(1).upper(), m.group(2).strip()
+        if kind in ("HOST-KEYWORD", "DOMAIN-KEYWORD"):
             add_host_keyword(target)
         else:
             add_host_suffix(target)
@@ -346,8 +458,10 @@ def parse_line(line: str):
 
 
 def load_custom():
+    global CURRENT_SOURCE
     if not os.path.exists(CUSTOM_FILE):
         return
+    CURRENT_SOURCE = "custom.txt"
     with open(CUSTOM_FILE, "r", encoding="utf-8") as f:
         for line in f:
             line = line.split("#", 1)[0].strip()  # 去掉行内注释
@@ -357,6 +471,7 @@ def load_custom():
 
 
 def load_sources():
+    global CURRENT_SOURCE
     if not os.path.exists(SOURCES_FILE):
         return
     urls = []
@@ -366,6 +481,7 @@ def load_sources():
             if line and line.startswith("http"):
                 urls.append(line)
     for url in urls:
+        CURRENT_SOURCE = url
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=25) as resp:
@@ -376,6 +492,30 @@ def load_sources():
             print(f"[OK] 已合并上游: {url}  (新增 {len(rules) - count_before} 条)")
         except Exception as e:
             print(f"[跳过] 上游抓取失败，已忽略: {url}  ({e})")
+    CURRENT_SOURCE = "sources.txt"
+
+
+def load_existing_output():
+    """离线模式：把现有 adblock.list 当作唯一来源重新规范化。
+
+    用途：在没有外网（或 GitHub 拉不动）的环境里，把 allowlist / 关键词降级 /
+    IP 分离等新逻辑套用到已发布的产物上，并立刻验证效果。
+    联网时走 load_custom + load_sources 才是权威构建。
+    """
+    global CURRENT_SOURCE
+    if not os.path.exists(OUTPUT_FILE):
+        print(f"[离线] 找不到 {OUTPUT_FILE}，跳过")
+        return
+    CURRENT_SOURCE = "offline(adblock.list)"
+    n = 0
+    with open(OUTPUT_FILE, "r", encoding="utf-8", errors="ignore") as f:
+        for line in f:
+            s = line.strip()
+            if not s or s.startswith("#"):
+                continue
+            parse_line(s)
+            n += 1
+    print(f"[离线] 从现有 adblock.list 读入 {n} 行，重新规范化")
 
 
 def load_script_fixes():
@@ -414,6 +554,67 @@ def _action(line: str) -> str:
     return p[2].lower() if len(p) >= 3 else ""
 
 
+def _rule_touches_allowed(line: str) -> bool:
+    """判断一条重写规则是否指向功能豁免域名。
+
+    URL 模式是正则（api\\.m\\.jd\\.com），先还原成裸文本再匹配。
+    匹配时要求域名前面是 . 或 /，避免 xyzjd.com 被误判成命中 jd.com。
+    """
+    pat = _pattern(line).lower()
+    if not pat or not ALLOW_FULL:
+        return False
+    norm = pat.replace("\\.", ".").replace("\\/", "/")
+    for a in ALLOW_FULL:
+        if re.search(r"(?:^|[./])" + re.escape(a) + r"(?![a-z0-9-])", norm):
+            return True
+    return False
+
+
+def _limit_mitm(blocks):
+    """给 MitM 域名总量封顶。
+
+    QX 会为每个 hostname 建立 TLS 中间人，域名越多握手与内存开销越大。
+    数量级失控时（本项目曾达 1539 个）表现是随机性的"网络异常"，
+    很难和规则误杀区分开。按来源顺序截断，越靠前的来源越优先保留。
+    """
+    seen = set()
+    total = 0
+    dropped = 0
+    # 域名层已经整域拒绝的域名，再配 MitM 是纯浪费：请求根本发不出去，
+    # 白白占用握手开销与额度。先剔掉，把额度让给真正需要的域名。
+    rejected = {k.split(",")[1] for k in rules if k.startswith("HOST-SUFFIX,")}
+    waste = 0
+    out = []
+    for b in blocks:
+        kept_lines = []
+        for s in b.splitlines():
+            m = re.match(r"^hostname\s*=\s*(.*)$", s, re.I)
+            if not m:
+                kept_lines.append(s)
+                continue
+            hosts = [h for h in re.split(r"[,\s]+", m.group(1)) if h]
+            keep = []
+            for h in hosts:
+                key = h.lower().lstrip("*.")
+                if key in seen:
+                    continue
+                if key in rejected:
+                    waste += 1
+                    continue
+                if total >= MITM_LIMIT:
+                    dropped += 1
+                    continue
+                seen.add(key)
+                keep.append(h)
+                total += 1
+            if keep:
+                kept_lines.append("hostname = " + ", ".join(keep))
+        out.append("\n".join(kept_lines) + "\n")
+    if waste:
+        print(f"[MitM] 剔除 {waste} 个「已被域名层拒绝」的域名（MitM 对它们无效）")
+    return out, total, dropped
+
+
 def build_rewrite():
     """两阶段合并重写规则为单条订阅用的 rewrite.list。
 
@@ -431,8 +632,19 @@ def build_rewrite():
     """
     sources = []  # [(来源标签, [行])]
 
+    if OFFLINE:
+        # 离线模式：现有 rewrite.list 就是唯一来源，重新走一遍清洗与裁决
+        if os.path.exists(REWRITE_OUTPUT):
+            with open(REWRITE_OUTPUT, "r", encoding="utf-8", errors="ignore") as f:
+                cleaned = sanitize_rewrite(f.read(), "offline(rewrite.list)")
+            if cleaned:
+                sources.append(("offline · 现有 rewrite.list", cleaned.splitlines()))
+                print("[离线] 从现有 rewrite.list 读入，重新规范化")
+        else:
+            print(f"[离线] 找不到 {REWRITE_OUTPUT}，跳过重写层")
+
     # ① 本地固化源优先
-    if os.path.exists(REWRITE_LOCAL_FILE):
+    if not OFFLINE and os.path.exists(REWRITE_LOCAL_FILE):
         with open(REWRITE_LOCAL_FILE, "r", encoding="utf-8") as f:
             cleaned = sanitize_rewrite(f.read(), "wechat_rewrite.conf")
         if cleaned:
@@ -442,7 +654,7 @@ def build_rewrite():
 
     # ② 上游各源
     urls = []
-    if os.path.exists(REWRITE_SOURCES_FILE):
+    if not OFFLINE and os.path.exists(REWRITE_SOURCES_FILE):
         with open(REWRITE_SOURCES_FILE, "r", encoding="utf-8") as f:
             for line in f:
                 line = line.split("#", 1)[0].strip()
@@ -501,9 +713,23 @@ def build_rewrite():
                 if len(safe) != len(hosts):
                     removed = [h for h in hosts if _is_subscription_infra(h)]
                     print(f"[剔除] {label}: hostname 去掉订阅托管域名 {removed}")
+                # 功能豁免：被豁免的域名一旦进入 MitM，凡是做了证书固定的 App
+                # 都会直接连接失败（"没网"但规则里查不到任何 reject，极难自查）。
+                # 京东这次就是踩在这里：api.m.jd.com 同时出现在 MitM 列表和业务链路上。
+                before = len(safe)
+                safe = [h for h in safe if not _needs_mitm_exempt(h)]
+                if len(safe) != before:
+                    removed = [h for h in hosts if _needs_mitm_exempt(h)]
+                    print(f"[豁免] {label}: hostname 去掉功能豁免域名 {removed}")
+                    allow_stat["mitm"] += len(removed)
                 if not safe:
                     continue
                 s = "hostname = " + ", ".join(safe)
+            else:
+                # 功能豁免域的 rewrite 规则一并丢弃：
+                # 该域名不会被 MitM，规则本来就不会生效；留着只会误导后来看配置的人。
+                if _rule_touches_allowed(s):
+                    continue
             kept.append(s)
         filtered.append((label, kept))
 
@@ -541,49 +767,101 @@ def build_rewrite():
             blocks.append(f"# ===== source: {label} =====\n" + "\n".join(out) + "\n")
 
     if blocks:
+        blocks, mitm_total, mitm_dropped = _limit_mitm(blocks)
         with open(REWRITE_OUTPUT, "w", encoding="utf-8") as f:
             f.write("\n".join(blocks) + "\n")
         print(f"[完成] 重写清单共 {len(blocks)} 个来源，{total} 条去重后规则 -> {REWRITE_OUTPUT}")
+        print(f"[MitM] 启用 {mitm_total} 个域名"
+              + (f"（已按上限 {MITM_LIMIT} 截断 {mitm_dropped} 个）" if mitm_dropped else ""))
         if script_fixes:
             print(f"[脚本修复] 重定向 {fix_stat['replaced']} 条规则的失效脚本地址，"
                   f"丢弃 {fix_stat['dropped']} 条（无可用镜像）")
         if script_wins:
             print(f"[裁决] 共 {len(script_wins)} 个 URL 模式按「脚本优先于整条拒绝」处理")
-        print(f"[完成] 重写清单共 {len(blocks)} 个来源，{len(seen)} 条去重后规则 -> {REWRITE_OUTPUT}")
 
 
-def main():
-    load_custom()
-    load_sources()
-    build_rewrite()
-    rules_list = sorted(rules)
+def _write_list(path: str, rules_list, title: str, desc: str):
     kinds = {}
     for r in rules_list:
         k = r.split(",")[0]
         kinds[k] = kinds.get(k, 0) + 1
     header = [
-        "# NAME: Apple-Ads-Block (Quantumult X)",
-        "# DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/"
-        "微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。",
+        f"# NAME: {title}",
+        f"# DESC: {desc}",
         f"# COUNT: {len(rules_list)}"
         f" (HOST-SUFFIX {kinds.get('HOST-SUFFIX', 0)}"
         f" / HOST-KEYWORD {kinds.get('HOST-KEYWORD', 0)}"
-        f" / IP-CIDR {kinds.get('IP-CIDR', 0)})",
+        + (f" / IP-CIDR {kinds.get('IP-CIDR', 0)}" if kinds.get("IP-CIDR") else "")
+        + ")",
+        f"# ALLOW: 功能豁免 {len(ALLOW_FULL)} 个域名（见 allowlist.txt），这些域名不会出现在本清单里",
         "# UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建",
         "",
     ]
-    out = header + rules_list
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write("\n".join(out) + "\n")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write("\n".join(header + list(rules_list)) + "\n")
+    return kinds
+
+
+def main():
+    # 豁免清单必须最先加载：后面的每一次解析都要用它做判定
+    load_allowlist()
+
+    if OFFLINE:
+        load_existing_output()
+    else:
+        load_custom()
+        load_sources()
+    build_rewrite()
+
+    rules_list = sorted(rules)
+    kinds = _write_list(
+        OUTPUT_FILE, rules_list,
+        "Apple-Ads-Block (Quantumult X)",
+        "苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/"
+        "微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。",
+    )
     print(f"[完成] 共写入 {len(rules_list)} 条规则 -> {OUTPUT_FILE}")
     print(f"        分布: {kinds}")
+
+    # ---- 精简包：只留中文 App 覆盖最好的来源，体积小、误杀低 ----
+    LITE_KEEP = ("custom.txt", "blackmatrix7")
+    if OFFLINE:
+        print("[精简包] 离线模式无法区分来源，跳过 adblock-lite.list 生成")
+    else:
+        lite = [r for r in rules_list
+                if any(k in rules.get(r, "") for k in LITE_KEEP)]
+        if lite:
+            _write_list(
+                LITE_OUTPUT, lite,
+                "Apple-Ads-Block Lite (Quantumult X)",
+                "精简版：仅 custom.txt + blackmatrix7 两个中文 App 覆盖最好的来源，"
+                "剔除国际网页广告与 IP 规则。体积约为完整版的 1/4，适合先用这个跑通。",
+            )
+            print(f"[完成] 精简包 {len(lite)} 条 -> {LITE_OUTPUT}")
+
+    # ---- IP 规则单独成包（默认不并入主包）----
+    if ip_rules:
+        with open(IP_OUTPUT, "w", encoding="utf-8") as f:
+            f.write("\n".join([
+                "# NAME: Apple-Ads-Block IP 层 (Quantumult X)",
+                "# DESC: 裸 IP 广告服务器拦截。默认不启用 —— 单 IP 规则收益低、误伤面不可控，",
+                "#       且会拖慢 QX 的每次连接判定。确认需要时再单独订阅。",
+                f"# COUNT: {len(ip_rules)}",
+                "",
+            ] + sorted(ip_rules)) + "\n")
+        print(f"[完成] IP 层 {len(ip_rules)} 条 -> {IP_OUTPUT}（默认不订阅）")
+
     if dropped_keywords:
-        print(f"[安全阀] 丢弃过宽关键词 {len(dropped_keywords)} 个: "
+        print(f"[安全阀] 丢弃/降级关键词 {len(dropped_keywords)} 个: "
               f"{', '.join(sorted(set(dropped_keywords))[:20])}")
     if allow_hits:
         uniq = sorted(set(allow_hits))
         print(f"[安全阀] 基础设施白名单拦截 {len(allow_hits)} 次、{len(uniq)} 个域名"
               f"（上游想封 GitHub / jsDelivr 之类，已放行）: {', '.join(uniq[:12])}")
+    if allow_stat["blocked"]:
+        uniq = sorted(set(allow_stat["blocked"]))
+        print(f"[豁免] 功能豁免拦截 {allow_stat['full']} 次、{len(uniq)} 个域名"
+              f"（上游想封业务域名，已放行）: {', '.join(uniq[:15])}")
     print(f"[安全阀] IP 规则: 跳过私有/保留段 {ip_stat['skipped_private']} 条, "
           f"跳过过大网段 {ip_stat['skipped_broad']} 条")
     print(f"[安全阀] 带路径的 AdGuard 规则（域名层无法表达，已丢弃）: "
@@ -591,6 +869,7 @@ def main():
 
 
 if __name__ == "__main__":
+    OFFLINE = "--offline" in sys.argv
     if "-o" in sys.argv:
         idx = sys.argv.index("-o")
         OUTPUT_FILE = os.path.abspath(sys.argv[idx + 1])
