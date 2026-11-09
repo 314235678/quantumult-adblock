@@ -34,6 +34,11 @@ ADBLOCK = os.path.join(HERE, "adblock.list")
 REWRITE = os.path.join(HERE, "rewrite.list")
 
 MIN_DOMAIN_RULES = 5000
+# 上限闸门：2026-11 出过一次「规则修好后上游巨无霸清单被全量收进来」的事故，
+# blackmatrix7 一份清单就贡献了 29 万条（11 MB），QX 载入后启动卡死。
+# 数量失控比数量不足更危险 —— 数量不足用户会立刻发现，数量爆炸往往要等到
+# 手机变卡才被察觉。所以这里设硬上限。
+MAX_DOMAIN_RULES = 60000
 MIN_REWRITE_RULES = 1000
 
 errors = []
@@ -63,6 +68,9 @@ lines = [l.strip() for l in text.splitlines() if l.strip() and not l.startswith(
 
 if len(lines) < MIN_DOMAIN_RULES:
     err(f"adblock.list 规则过少：{len(lines)} 条（下限 {MIN_DOMAIN_RULES}），疑似上游集体抓取失败")
+if len(lines) > MAX_DOMAIN_RULES:
+    err(f"adblock.list 规则过多：{len(lines)} 条（上限 {MAX_DOMAIN_RULES}），"
+        f"QX 会载入困难。检查 sources.txt 里是否漏了 types 过滤（巨无霸清单需限流）")
 
 bad_kind = set()
 ip_missing_noresolve = 0

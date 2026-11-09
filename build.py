@@ -179,6 +179,13 @@ ip_stat = {"skipped_private": 0, "skipped_broad": 0}  # IP 规则安全阀统计
 path_stat = {"skipped_path_rule": 0}  # 因带路径无法表达而丢弃的规则数
 allow_hits = []  # 被基础设施白名单拦下的域名（用于构建日志）
 ip_rules = set()  # IP-CIDR 规则单独存，不进主包
+# 按源限制可接受的规则类型（sources.txt 里用 `| types=HOST,HOST-KEYWORD` 指定）。
+# 背景：blackmatrix7 的 Advertising.list 已经膨胀到 29 万条（其中 27 万条是
+# HOST-SUFFIX 子域通配）。全收会让 QX 载入 11 MB 规则、启动与匹配都卡死；
+# 只取其中的精确域名（HOST）与关键词（HOST-KEYWORD）约 1.7 万条，
+# 既保住中文 App 的覆盖，又把规模压在可用区间。
+ALLOW_TYPES = None  # None 表示不限
+type_stat = {"skipped_by_filter": 0}
 
 # Quantumult X 重写行合法的关键字（第 2 个空白分隔字段）
 REWRITE_KEYWORDS = {
@@ -325,7 +332,7 @@ def ip_cidr_rule(cidr: str):
     ip_rules.add(f"IP-CIDR,{net},REJECT{IP_RULE_TAIL}")
 
 
-def add_host_suffix(domain: str):
+def add_host_suffix(domain: str, kind: str = "HOST-SUFFIX", force: bool = False):
     d = domain.strip().lower().lstrip("*.").rstrip(".")
     if not d or d in ("*",):
         return
@@ -333,6 +340,9 @@ def add_host_suffix(domain: str):
         ip_cidr_rule(d)
         return
     if not DOMAIN_RE.match(d):
+        return
+    if not force and ALLOW_TYPES is not None and kind not in ALLOW_TYPES:
+        type_stat["skipped_by_filter"] += 1
         return
     if _is_critical(d):
         allow_hits.append(d)
@@ -358,7 +368,7 @@ def add_host_keyword(kw: str):
     # 而上游确实这么写了，光靠长度和黑名单安全阀拦不住。
     # 降级后语义更精确，也不会误伤 xxx.mapi.m.jd.com.evil.com 这种拼接域名。
     if low.count(".") >= 1 and DOMAIN_RE.match(low):
-        add_host_suffix(low)
+        add_host_suffix(low, force=True)
         dropped_keywords.append(f"{kw}(降级为域名)")
         return
 
@@ -373,6 +383,9 @@ def add_host_keyword(kw: str):
     # 同样会连带打穿豁免，直接丢弃。
     if any(low in a for a in ALLOW_FULL):
         dropped_keywords.append(f"{kw}(会打穿豁免域名)")
+        return
+    if ALLOW_TYPES is not None and "HOST-KEYWORD" not in ALLOW_TYPES:
+        type_stat["skipped_by_filter"] += 1
         return
     rules[f"HOST-KEYWORD,{kw},REJECT"] = CURRENT_SOURCE
 
@@ -440,8 +453,10 @@ def parse_line(line: str):
         kind, target = m.group(1).upper(), m.group(2).strip()
         if kind in ("HOST-KEYWORD", "DOMAIN-KEYWORD"):
             add_host_keyword(target)
+        elif kind in ("HOST", "DOMAIN"):
+            add_host_suffix(target, kind="HOST")
         else:
-            add_host_suffix(target)
+            add_host_suffix(target, kind="HOST-SUFFIX")
         return
 
     # 纯域名
@@ -470,28 +485,49 @@ def load_custom():
             parse_line(line)
 
 
+def parse_source_line(raw: str):
+    """解析 sources.txt 的一行：URL [| types=HOST,HOST-KEYWORD]
+
+    右侧的 types 用来限制「这个源允许贡献哪几类规则」。
+    典型用途：blackmatrix7 的清单已经涨到 29 万条（27 万条是 HOST-SUFFIX 子域通配），
+    全量收进来会让 QX 载入 11 MB 规则、启动卡顿；只取 HOST + HOST-KEYWORD
+    约 1.7 万条，中文 App 覆盖几乎不损失。
+    """
+    parts = raw.split("|", 1)
+    url = parts[0].strip()
+    types = None
+    if len(parts) > 1:
+        m = re.search(r"types\s*=\s*([A-Za-z,\- ]+)", parts[1])
+        if m:
+            types = {t.strip().upper() for t in m.group(1).split(",") if t.strip()}
+    return url, types
+
+
 def load_sources():
-    global CURRENT_SOURCE
+    global CURRENT_SOURCE, ALLOW_TYPES
     if not os.path.exists(SOURCES_FILE):
         return
-    urls = []
+    entries = []
     with open(SOURCES_FILE, "r", encoding="utf-8") as f:
         for line in f:
-            line = line.split("#", 1)[0].strip()
-            if line and line.startswith("http"):
-                urls.append(line)
-    for url in urls:
+            raw = line.split("#", 1)[0].strip()
+            if raw and raw.startswith("http"):
+                entries.append(parse_source_line(raw))
+    for url, types in entries:
         CURRENT_SOURCE = url
+        ALLOW_TYPES = types
         try:
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=25) as resp:
+            with urllib.request.urlopen(req, timeout=60) as resp:
                 data = resp.read().decode("utf-8", "ignore")
             count_before = len(rules)
             for ln in data.splitlines():
                 parse_line(ln)
-            print(f"[OK] 已合并上游: {url}  (新增 {len(rules) - count_before} 条)")
+            limit = f" [仅取 {'/'.join(sorted(types))}]" if types else ""
+            print(f"[OK] 已合并上游: {url}  (新增 {len(rules) - count_before} 条){limit}")
         except Exception as e:
             print(f"[跳过] 上游抓取失败，已忽略: {url}  ({e})")
+    ALLOW_TYPES = None
     CURRENT_SOURCE = "sources.txt"
 
 
@@ -823,7 +859,10 @@ def main():
     print(f"[完成] 共写入 {len(rules_list)} 条规则 -> {OUTPUT_FILE}")
     print(f"        分布: {kinds}")
 
-    # ---- 精简包：只留中文 App 覆盖最好的来源，体积小、误杀低 ----
+    # ---- 精简包：去掉国际网页广告源，只留中文 App 覆盖 ----
+    # 说明：完整版本就已经被 types 限流压在 2 万条 / 750 KB，所以精简包的意义
+    # 不是"更小"，而是"更纯"—— 剔除对国内 App 无用的境外网页广告域，
+    # 适合只用 App、不指望拦 Safari 网页广告的人。
     LITE_KEEP = ("custom.txt", "blackmatrix7")
     if OFFLINE:
         print("[精简包] 离线模式无法区分来源，跳过 adblock-lite.list 生成")
@@ -834,8 +873,8 @@ def main():
             _write_list(
                 LITE_OUTPUT, lite,
                 "Apple-Ads-Block Lite (Quantumult X)",
-                "精简版：仅 custom.txt + blackmatrix7 两个中文 App 覆盖最好的来源，"
-                "剔除国际网页广告与 IP 规则。体积约为完整版的 1/4，适合先用这个跑通。",
+                "精简版：仅 custom.txt + blackmatrix7，只保留中文 App 的广告域，"
+                "不含境外网页广告服务器。适合只用 App、不拦 Safari 网页广告的场景。",
             )
             print(f"[完成] 精简包 {len(lite)} 条 -> {LITE_OUTPUT}")
 
@@ -864,6 +903,9 @@ def main():
               f"（上游想封业务域名，已放行）: {', '.join(uniq[:15])}")
     print(f"[安全阀] IP 规则: 跳过私有/保留段 {ip_stat['skipped_private']} 条, "
           f"跳过过大网段 {ip_stat['skipped_broad']} 条")
+    if type_stat["skipped_by_filter"]:
+        print(f"[安全阀] 按 sources.txt 的 types 过滤跳过 {type_stat['skipped_by_filter']} 条"
+              f"（源头限流，防止巨无霸清单把规则数顶到 10 万+）")
     print(f"[安全阀] 带路径的 AdGuard 规则（域名层无法表达，已丢弃）: "
           f"{path_stat['skipped_path_rule']} 条")
 

@@ -4,22 +4,34 @@
 # 抓取失败的行会被跳过，不影响本地 custom.txt 生成的规则。
 # 每行一个 URL；# 开头为注释。
 #
+# 行格式：
+#   URL
+#   URL | types=HOST,HOST-KEYWORD     ← 只采纳指定类型的规则
+#
 # 选源原则：宁精不滥。
 #   · Quantumult X 每次启动都要把全部规则载入内存并逐条匹配，
 #     规则数超过约 5 万条后，低端机会明显卡顿、耗电上升；
 #   · 所以这里只收「10k~20k 量级、维护活跃、误杀率低」的清单，
-#     200k 级别的巨无霸列表放在文件末尾，需要时自行开启。
+#     200k 级别的巨无霸列表必须用 types 过滤后才敢收（见第 2 项）。
 # ============================================================
 
 # ---------- 1. 广告服务器基础清单（网页 + App 横幅/SDK 广告）----------
+# 约 1.3k 条精确域名，覆盖境外网页广告服务器，误杀率极低。
 https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/sections/adservers.txt
 
-# ---------- 2. blackmatrix7 广告规则（Quantumult X 原生格式，约 1.6 万条）----------
-# 中文 App 覆盖最好的一份，含 HOST-SUFFIX / HOST-KEYWORD / IP-CIDR 三种类型。
-# 注意：本文件同时包含大量 IP-CIDR 条目，build.py 会过滤私有网段与超大网段后再收录。
-https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list
+# ---------- 2. blackmatrix7 广告规则（中文 App 覆盖最好的一份）----------
+# ⚠️ 这份清单已经膨胀到 29 万条：HOST 16436 + HOST-KEYWORD 278
+#    + HOST-SUFFIX 273956 + IP-CIDR 486（文件本体 12.5 MB）。
+#    全量收进来 QX 要载入 11 MB 规则，启动和匹配都会卡死。
+# 所以只取它的两类规则：
+#    HOST          —— 精确域名，16436 条，误杀率最低的那部分
+#    HOST-KEYWORD  —— 关键词，278 条
+# 被跳过的 27 万条 HOST-SUFFIX 是子域通配，看着"更全"，实际是把整个
+# 广告联盟的泛域名全收进来，收益远小于代价。确实需要时把 types 改成
+# types=HOST,HOST-KEYWORD,HOST-SUFFIX，但请先想清楚要不要 11 MB 的规则。
+https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list | types=HOST,HOST-KEYWORD
 
-# ---------- 3. 217heidai 广告过滤规则（AdGuard 格式，约 1.2 万条）----------
+# ---------- 3. 217heidai 广告过滤规则（AdGuard 格式）----------
 # 由多份国际清单合成，更新频繁，对境外广告 SDK 覆盖较好，与第 2 项互补。
 https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt
 
