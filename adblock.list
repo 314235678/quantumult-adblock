@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 19907 (HOST-SUFFIX 19764 / HOST-KEYWORD 143)
+# COUNT: 19911 (HOST-SUFFIX 19768 / HOST-KEYWORD 143)
 # ALLOW: 功能豁免 3 个域名（见 allowlist.txt），这些域名不会出现在本清单里
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
@@ -921,6 +921,7 @@ HOST-SUFFIX,9ehy8a8u6b.com,REJECT
 HOST-SUFFIX,9f23ab605837.com,REJECT
 HOST-SUFFIX,9f4272342f817.com,REJECT
 HOST-SUFFIX,9h7n8.com,REJECT
+HOST-SUFFIX,9hito.com,REJECT
 HOST-SUFFIX,9juj88.com,REJECT
 HOST-SUFFIX,9k9by.com,REJECT
 HOST-SUFFIX,9ksj.xyz,REJECT
@@ -4431,6 +4432,7 @@ HOST-SUFFIX,cookies.unidadeditorial.es,REJECT
 HOST-SUFFIX,cookiescript.info,REJECT
 HOST-SUFFIX,cool18.com,REJECT
 HOST-SUFFIX,coolandevencooler.com,REJECT
+HOST-SUFFIX,coolaspen.tech,REJECT
 HOST-SUFFIX,coollcloud.com,REJECT
 HOST-SUFFIX,coolmirage.com,REJECT
 HOST-SUFFIX,coolsite.club,REJECT
@@ -6331,6 +6333,7 @@ HOST-SUFFIX,faiyazahmed.com,REJECT
 HOST-SUFFIX,falconsafe.com.sg,REJECT
 HOST-SUFFIX,familialsimulation.com,REJECT
 HOST-SUFFIX,fanconverter.wetpaint.me,REJECT
+HOST-SUFFIX,fancyotter.me,REJECT
 HOST-SUFFIX,fandommetrics.com,REJECT
 HOST-SUFFIX,fang99.com,REJECT
 HOST-SUFFIX,fanglei520.oicchina.com,REJECT
@@ -6520,6 +6523,7 @@ HOST-SUFFIX,financemonk.net,REJECT
 HOST-SUFFIX,financenews.pw,REJECT
 HOST-SUFFIX,find-my-great-life.com,REJECT
 HOST-SUFFIX,findepended.com,REJECT
+HOST-SUFFIX,finebucket.info,REJECT
 HOST-SUFFIX,finema-net.cdn.ampproject.org,REJECT
 HOST-SUFFIX,fingerprint-veri.info,REJECT
 HOST-SUFFIX,finnhair.co.uk,REJECT
