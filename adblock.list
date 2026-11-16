@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block (Quantumult X)
 # DESC: 苹果手机去广告/反追踪规则（覆盖 Apple/Google/Meta/X/TikTok-抖音/微信-腾讯/百度/阿里 + 通用广告与追踪 SDK），支持订阅自动更新。
-# COUNT: 19912 (HOST-SUFFIX 19769 / HOST-KEYWORD 143)
+# COUNT: 19915 (HOST-SUFFIX 19772 / HOST-KEYWORD 143)
 # ALLOW: 功能豁免 3 个域名（见 allowlist.txt），这些域名不会出现在本清单里
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
@@ -1981,6 +1981,7 @@ HOST-SUFFIX,amateur.amarotic.com,REJECT
 HOST-SUFFIX,amateurpayouts.com,REJECT
 HOST-SUFFIX,amatrck.com,REJECT
 HOST-SUFFIX,amazing-dating.com,REJECT
+HOST-SUFFIX,amazingfork.com,REJECT
 HOST-SUFFIX,amazingvacationhotels.com,REJECT
 HOST-SUFFIX,amazon-adsystem.com,REJECT
 HOST-SUFFIX,amazonaws.com,REJECT
@@ -11462,6 +11463,7 @@ HOST-SUFFIX,najyzdlmqq.com,REJECT
 HOST-SUFFIX,nakedreel.com,REJECT
 HOST-SUFFIX,nalizerostants.info,REJECT
 HOST-SUFFIX,nalrxmmcs.com,REJECT
+HOST-SUFFIX,namebrain.org,REJECT
 HOST-SUFFIX,narrow.azenergyforum.com,REJECT
 HOST-SUFFIX,narwhal.mobidia.com,REJECT
 HOST-SUFFIX,nasosettoourm.com,REJECT
@@ -19683,6 +19685,7 @@ HOST-SUFFIX,zip-zip-swan.com,REJECT
 HOST-SUFFIX,ziphentai.com,REJECT
 HOST-SUFFIX,zipropyl.com,REJECT
 HOST-SUFFIX,zipup.click,REJECT
+HOST-SUFFIX,zipzirim.com,REJECT
 HOST-SUFFIX,ziqdunppuzjd.com,REJECT
 HOST-SUFFIX,zirlztyowfnif.com,REJECT
 HOST-SUFFIX,zisbrygtluib.com,REJECT
