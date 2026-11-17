@@ -224,3 +224,36 @@ smartadserver.com
 criteo.com
 loopme.com
 smaato.com
+
+# ===================== 红果短剧 / 番茄系（字节短剧·小说） =====================
+# 背景（2026-11 实测）：本清单对红果的覆盖原本是 0 —— youlishipin / fqnovel /
+# hongguoduanju 一条规则都没有，所以红果的开屏和中插广告一直拦不住。
+#
+# ⚠️ 网上流传的「红果去广告 Loon 插件」里有一批域名是虚构的，AliDNS 实测 NXDOMAIN：
+#      hongguoapp.com / hongguosdk.com / ad.pangle.cn / hongguo.douyin.com
+#    这类规则装上去看着像生效，实际一条都不起作用。而且它还有两条更危险的：
+#    DOMAIN-SUFFIX,zijieapi.com（字节通用 API）和 DOMAIN-SUFFIX,bytedance.com
+#    （整个字节域），照抄会打穿一堆 App —— 跟京东那次「整域封禁」是同一类错误。
+#
+# 下面只收两类：① DoH 验证真实解析；② 语义上明确是广告素材或埋点上报。
+#
+# 广告素材签名 CDN：开屏、中插、悬浮贴片的广告图与素材都从这里出。
+# 命名规律 pN-ad-sign.byteimg.com，实测有解析的只有 p3 / p6 / p9（p1/p2 是 NXDOMAIN）。
+p3-ad-sign.byteimg.com
+p6-ad-sign.byteimg.com
+p9-ad-sign.byteimg.com
+# 广告素材的另一处 CDN（抖音系通用）
+sf3-ttcdn-tos.pstatp.com
+# 推广活动落地页
+activity-ag.awemeughun.com
+# 短链 / 点击统计
+dig.bdurl.net
+# 字节埋点与监控上报：纯上报通道，封掉不影响任何业务功能
+i.snssdk.com
+is.snssdk.com
+i-lq.snssdk.com
+mcs.snssdk.com
+tnc3-alisc1.snssdk.com
+tnc3-aliec2.snssdk.com
+# 穿山甲广告 SDK 投放通道（与上面 pangle 段配合；此域仅 CNAME 解析，作兜底）
+pangolin-sdk-toutiao.com

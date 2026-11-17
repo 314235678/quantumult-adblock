@@ -93,6 +93,27 @@ httpdns-push.heytapmobile.com
 httpdns-ocloud.heytapmobile.com
 httpdns-euex-push.heytapmobile.com
 
+# ---------- 微信小程序主接口（2026-11 发现）----------
+# apis.alenable.com 是阿那亚小程序的主接口，被上游 blackmatrix7 整域拒绝，
+# 结果是小程序本身打不开；而写在它上面的两条去广告重写规则也因为
+# 「域名层已拒绝 → MitM 无意义 → 被 _limit_mitm 剔除」而双双失效。
+# 这类情况用 full 标签会把 MitM 一起豁免掉（规则照样死），所以用 domain 标签：
+# 只从拒绝清单里放行，MitM 保留，去广告规则继续工作。
+alenable.com domain
+
+# ---------- 同域混合：整域里有广告也有正常资源（2026-11 新增）----------
+# 这四个域名上游都做成了【整域拒绝】，但重写层本来已经有更精确的路径级规则：
+#   r6.mo.baidu.com         只 reject /res/file/advertisement/files/*.jpg
+#   dispatcher.camera360.com 只 reject /api/v1/list
+#   search.video.iqiyi.com  用脚本清洗搜索结果里的广告位
+#   feedback.uc.cn          只 reject /feedback/api/get_unread_status
+# 整域一封，精确规则全部失效、功能也一起坏（百度图片资源、相机360、爱奇艺搜索）。
+# 用 domain 标签：域名层放行，MitM 与路径级规则保留 —— 效果比整域封更好、更准。
+r6.mo.baidu.com domain
+dispatcher.camera360.com domain
+search.video.iqiyi.com domain
+feedback.uc.cn domain
+
 # ---------- 其他同域高危（示例，按需解除注释）----------
 # 判定方法：某 App 开启订阅后突然"没网"，但关掉订阅就好了 —— 八成是这类问题。
 # 把它主域加到这里，重跑 build.py 即可。

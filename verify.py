@@ -254,7 +254,9 @@ import build as B  # noqa: E402
 
 B.load_allowlist()
 
-if B.ALLOW_FULL:
+if B.ALLOW_FULL or B.ALLOW_DOMAIN:
+    # full 与 domain 两种标签都要从拒绝清单里放行，只是 domain 保留 MitM
+    domain_pool = B.ALLOW_FULL | B.ALLOW_DOMAIN
     allow_hit = []
     for l in lines:
         if not (l.startswith("HOST-SUFFIX,") or l.startswith("HOST-KEYWORD,")):
@@ -270,9 +272,9 @@ if B.ALLOW_FULL:
         #     子串判定会误报 HOST-SUFFIX,browser.miui.com（那是另一个域，不是泄漏）。
         #   HOST-KEYWORD 是子串匹配，关键词落在豁免域内部才会连带打穿，用子串判断。
         if kind == "HOST-KEYWORD":
-            hit = any(len(val) >= 4 and val in a for a in B.ALLOW_FULL)
+            hit = any(len(val) >= 4 and val in a for a in domain_pool)
         else:
-            hit = any(val == a or val.endswith("." + a) for a in B.ALLOW_FULL)
+            hit = any(val == a or val.endswith("." + a) for a in domain_pool)
         if hit:
             allow_hit.append(l)
     if allow_hit:
@@ -352,6 +354,28 @@ if essential_hit:
     err(f"{len(essential_hit)} 个基础域被整域拒绝，对应服务会整体不可用"
         f"（典型的「软件打不开 / 网络没网」）: {sorted(set(essential_hit))}")
 print(f"[信息] 基础域整域封禁: {len(essential_hit)} 个（应为 0）")
+
+# 重写规则的域名被域名层整域拒绝 = 死规则。
+# 请求在域名层就被 REJECT 了，根本走不到重写层，规则永远不会触发；
+# 更麻烦的是这类「业务域被整域封」通常意味着对应功能已经坏了 ——
+# 2026-11 阿那亚小程序就是：apis.alenable.com 被整域拒绝，小程序打不开，
+# 写在它上面的两条去广告规则同时也全废，界面上完全看不出来。
+suffix_blocked = set()
+for l in lines:
+    if l.startswith("HOST-SUFFIX,"):
+        p = l.split(",")
+        if len(p) >= 2:
+            suffix_blocked.add(p[1].strip().lower())
+dead_hosts = set()
+for m in re.finditer(r"^\^?https?:\\/\\/((?:[a-z0-9\-]+\\?\.)+[a-z]{2,})", rtext, re.M):
+    h = m.group(1).replace("\\.", ".").lower()
+    if h in suffix_blocked:
+        dead_hosts.add(h)
+if dead_hosts:
+    warn(f"{len(dead_hosts)} 个域名的重写规则被域名层整域拒绝而完全失效"
+         f"（对应功能大概率也坏了，考虑用 allowlist 的 domain 标签放行）: "
+         f"{sorted(dead_hosts)}")
+print(f"[信息] 因域名层整域拒绝而失效的重写域名: {len(dead_hosts)} 个")
 
 # HOST-KEYWORD 写成完整域名是典型的同域打穿，必须降级为 HOST-SUFFIX。
 

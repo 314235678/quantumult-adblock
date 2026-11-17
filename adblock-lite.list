@@ -1,6 +1,6 @@
 # NAME: Apple-Ads-Block Lite (Quantumult X)
 # DESC: 精简版：仅 custom.txt + blackmatrix7，只保留中文 App 的广告域，不含境外网页广告服务器。适合只用 App、不拦 Safari 网页广告的场景。
-# COUNT: 16594 (HOST-SUFFIX 16451 / HOST-KEYWORD 143)
+# COUNT: 16596 (HOST-SUFFIX 16453 / HOST-KEYWORD 143)
 # ALLOW: 功能豁免 53 个域名（见 allowlist.txt），这些域名不会出现在本清单里
 # UPDATE: 由 build.py 生成，建议配合 Quantumult X update-interval 或 GitHub Actions 定时重建
 
@@ -1915,7 +1915,6 @@ HOST-SUFFIX,apiinit.amap.com,REJECT
 HOST-SUFFIX,apilog.app.acfun.cn,REJECT
 HOST-SUFFIX,apimg.qunliao.info,REJECT
 HOST-SUFFIX,apipool.youzu.com,REJECT
-HOST-SUFFIX,apis.alenable.com,REJECT
 HOST-SUFFIX,apis.com.br,REJECT
 HOST-SUFFIX,apistat.gao7.com,REJECT
 HOST-SUFFIX,apistat.wasu.cn,REJECT
@@ -4196,7 +4195,6 @@ HOST-SUFFIX,directnicparking.com,REJECT
 HOST-SUFFIX,directtrk.com,REJECT
 HOST-SUFFIX,directxex.com,REJECT
 HOST-SUFFIX,discvr.net,REJECT
-HOST-SUFFIX,dispatcher.camera360.com,REJECT
 HOST-SUFFIX,displayads-formats.googleusercontent.com,REJECT
 HOST-SUFFIX,dissonbegant.info,REJECT
 HOST-SUFFIX,distantnews.com,REJECT
@@ -5248,7 +5246,6 @@ HOST-SUFFIX,feed.mikle.com,REJECT
 HOST-SUFFIX,feedage.com,REJECT
 HOST-SUFFIX,feedage.net,REJECT
 HOST-SUFFIX,feedback.cn.ronghub.com,REJECT
-HOST-SUFFIX,feedback.uc.cn,REJECT
 HOST-SUFFIX,feeds.delicious.com,REJECT
 HOST-SUFFIX,feefo.com,REJECT
 HOST-SUFFIX,feelophe.net,REJECT
@@ -7056,6 +7053,7 @@ HOST-SUFFIX,irpaknbwgif.com,REJECT
 HOST-SUFFIX,irqtkzvyhmmtyw.com,REJECT
 HOST-SUFFIX,irr.ru,REJECT
 HOST-SUFFIX,irvelcchuvsis.com,REJECT
+HOST-SUFFIX,is.snssdk.com,REJECT
 HOST-SUFFIX,isafe.pro,REJECT
 HOST-SUFFIX,isdspeed.qq.com,REJECT
 HOST-SUFFIX,isekvtjiahm.com,REJECT
@@ -8832,6 +8830,7 @@ HOST-SUFFIX,mclean.f.360.cn,REJECT
 HOST-SUFFIX,mcleaner.cn,REJECT
 HOST-SUFFIX,mcount.easebar.com,REJECT
 HOST-SUFFIX,mcrzrxwrtpr.com,REJECT
+HOST-SUFFIX,mcs.snssdk.com,REJECT
 HOST-SUFFIX,mcskucrxgwx.com,REJECT
 HOST-SUFFIX,mcuqjebym.com,REJECT
 HOST-SUFFIX,mcwbiz.com,REJECT
@@ -10295,6 +10294,7 @@ HOST-SUFFIX,p2343.com,REJECT
 HOST-SUFFIX,p2ads.com,REJECT
 HOST-SUFFIX,p2poolmining.net,REJECT
 HOST-SUFFIX,p2sdmkj6t.bkt.clouddn.com,REJECT
+HOST-SUFFIX,p3-ad-sign.byteimg.com,REJECT
 HOST-SUFFIX,p3-pack.byteimg.com,REJECT
 HOST-SUFFIX,p3.pstatp.com,REJECT
 HOST-SUFFIX,p3.tribution.mobi,REJECT
@@ -10304,12 +10304,14 @@ HOST-SUFFIX,p4.tribution.mobi,REJECT
 HOST-SUFFIX,p5.tribution.mobi,REJECT
 HOST-SUFFIX,p51d20aa4.website,REJECT
 HOST-SUFFIX,p5genexs.com,REJECT
+HOST-SUFFIX,p6-ad-sign.byteimg.com,REJECT
 HOST-SUFFIX,p6-pack.byteimg.com,REJECT
 HOST-SUFFIX,p6.tribution.mobi,REJECT
 HOST-SUFFIX,p7.tribution.mobi,REJECT
 HOST-SUFFIX,p78lld1s.top,REJECT
 HOST-SUFFIX,p7vortex.com,REJECT
 HOST-SUFFIX,p8.tribution.mobi,REJECT
+HOST-SUFFIX,p9-ad-sign.byteimg.com,REJECT
 HOST-SUFFIX,p9.tribution.mobi,REJECT
 HOST-SUFFIX,p99998888.com,REJECT
 HOST-SUFFIX,paads.dk,REJECT
@@ -10339,6 +10341,7 @@ HOST-SUFFIX,panection.co,REJECT
 HOST-SUFFIX,pangle-platform.com,REJECT
 HOST-SUFFIX,pangle.io,REJECT
 HOST-SUFFIX,pangle.io.edgekey.net,REJECT
+HOST-SUFFIX,pangolin-sdk-toutiao.com,REJECT
 HOST-SUFFIX,pangolin-sdk.douyin.com,REJECT
 HOST-SUFFIX,panoll.com,REJECT
 HOST-SUFFIX,panyeri.info,REJECT
@@ -11367,7 +11370,6 @@ HOST-SUFFIX,r2.tschewang.com,REJECT
 HOST-SUFFIX,r24-tech.com,REJECT
 HOST-SUFFIX,r55268.com,REJECT
 HOST-SUFFIX,r5g.cc,REJECT
-HOST-SUFFIX,r6.mo.baidu.com,REJECT
 HOST-SUFFIX,r7e0zhv8.com,REJECT
 HOST-SUFFIX,r8qs.adj.st,REJECT
 HOST-SUFFIX,rabc2.iteye.com,REJECT
@@ -12021,7 +12023,6 @@ HOST-SUFFIX,sealine.youku.com,REJECT
 HOST-SUFFIX,sealserver.trustwave.com,REJECT
 HOST-SUFFIX,seaoocyjpq.com,REJECT
 HOST-SUFFIX,search.twitter.com,REJECT
-HOST-SUFFIX,search.video.iqiyi.com,REJECT
 HOST-SUFFIX,search123.uk.com,REJECT
 HOST-SUFFIX,searchdims.network,REJECT
 HOST-SUFFIX,searchrecommend.kugou.com,REJECT
@@ -12154,6 +12155,7 @@ HOST-SUFFIX,sexykittenporn.com,REJECT
 HOST-SUFFIX,sexyoilwrestling.com,REJECT
 HOST-SUFFIX,sexyster.tk,REJECT
 HOST-SUFFIX,sexzoznamka.eu,REJECT
+HOST-SUFFIX,sf3-ttcdn-tos.pstatp.com,REJECT
 HOST-SUFFIX,sffmctrnimk.com,REJECT
 HOST-SUFFIX,sfgkhgfdsochwd.com,REJECT
 HOST-SUFFIX,sfhrxcbbmtfqw.com,REJECT

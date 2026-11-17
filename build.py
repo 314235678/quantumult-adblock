@@ -161,13 +161,19 @@ def _is_mitm_sensitive(h: str) -> bool:
 # 两者都必须做，缺一个就会出现「规则能更新，但装了以后手机没法用」。
 ALLOW_FULL = set()   # 完全豁免：域名拒绝层与 MitM 都不碰
 ALLOW_MITM = set()   # 仅豁免 MitM：域名层仍可拒绝，但不做中间人解密
-allow_stat = {"full": 0, "mitm": 0, "blocked": []}
+# 仅豁免域名拒绝层：不进拒绝清单，但【保留 MitM】。
+# 用于「业务域不能被整域封，但恰恰需要 MitM 才能做重写去广告」的场景。
+# 例：apis.alenable.com 是小程序主接口，被上游整域拒绝后小程序直接打不开，
+#     而写在它上面的两条去广告重写规则也因为 MitM 被剔除而双双失效。
+# 用 full 标签会连带把 MitM 也豁免掉，等于两条路都堵死，所以必须单独一档。
+ALLOW_DOMAIN = set()
+allow_stat = {"full": 0, "mitm": 0, "domain": 0, "blocked": []}
 # 从 MitM 里剔掉的高危业务域（银行/支付/政务），仅用于构建日志
 mitm_sensitive_stat = []
 
 
 def load_allowlist():
-    """读取 allowlist.txt。每行 '域名 [full|mitm]'，默认 full。"""
+    """读取 allowlist.txt。每行 '域名 [full|mitm|domain]'，默认 full。"""
     if not os.path.exists(ALLOW_FILE):
         return
     with open(ALLOW_FILE, "r", encoding="utf-8") as f:
@@ -182,6 +188,8 @@ def load_allowlist():
             tag = parts[1].strip().lower() if len(parts) > 1 else "full"
             if tag == "mitm":
                 ALLOW_MITM.add(d)
+            elif tag == "domain":
+                ALLOW_DOMAIN.add(d)
             else:
                 ALLOW_FULL.add(d)
 
@@ -394,6 +402,11 @@ def add_host_suffix(domain: str, kind: str = "HOST-SUFFIX", force: bool = False)
         allow_stat["full"] += 1
         allow_stat["blocked"].append(d)
         return
+    # 业务域不该被整域封，但仍要保留 MitM（重写去广告要用）
+    if _host_matches(d, ALLOW_DOMAIN):
+        allow_stat["domain"] += 1
+        allow_stat["blocked"].append(d)
+        return
     rules[f"HOST-SUFFIX,{d},REJECT"] = CURRENT_SOURCE
 
 
@@ -423,6 +436,9 @@ def add_host_keyword(kw: str):
     # 同样会连带打穿豁免，直接丢弃。
     if any(low in a for a in ALLOW_FULL):
         dropped_keywords.append(f"{kw}(会打穿豁免域名)")
+        return
+    if any(low in a for a in ALLOW_DOMAIN):
+        dropped_keywords.append(f"{kw}(会打穿业务域名)")
         return
     if ALLOW_TYPES is not None and "HOST-KEYWORD" not in ALLOW_TYPES:
         type_stat["skipped_by_filter"] += 1
@@ -990,7 +1006,8 @@ def main():
               f"（上游想封 GitHub / jsDelivr 之类，已放行）: {', '.join(uniq[:12])}")
     if allow_stat["blocked"]:
         uniq = sorted(set(allow_stat["blocked"]))
-        print(f"[豁免] 功能豁免拦截 {allow_stat['full']} 次、{len(uniq)} 个域名"
+        print(f"[豁免] 功能豁免拦截 {allow_stat['full']} 次（完全）+ "
+              f"{allow_stat['domain']} 次（仅域名层，保留 MitM），{len(uniq)} 个域名"
               f"（上游想封业务域名，已放行）: {', '.join(uniq[:15])}")
     if mitm_sensitive_stat:
         uniq = sorted(set(mitm_sensitive_stat))
