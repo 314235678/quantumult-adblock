@@ -23,7 +23,7 @@
 | `rewrite.list` | **② 应用内去广告层最终清单**（多源合并版，需 MITM，单条订阅） |
 | `custom.txt` | 本地自定义域名层（按 App 分类，可随意增删） |
 | `allowlist.txt` | **功能豁免清单（最高优先级）**：圈定"宁可漏拦、不可错杀"的业务域名，任何上游都封不到。京东那类"规则一开 App 就没网"的问题靠它根治 |
-| `sources.txt` | ① 的上游合并源（AdGuard 基础清单 + blackmatrix7 广告规则 + 217heidai 广告过滤 + Apple 专用清单） |
+| `sources.txt` | ① 的上游合并源（AdGuard 基础清单 + blackmatrix7 广告规则 + Apple 专用清单；217heidai 因格式不匹配已于 2026-11 停用，原因见第十一节之二） |
 | `rewrite_sources.txt` | ② 的上游合并源（墨鱼 + 黑名单7 + deezertidal + Moli-X + chxm1023 + fmz200 + app2smile 等 30 个） |
 | `wechat_rewrite.conf` | **③ 微信生态专用层**（本地固化，优先级最高）：公众号文章去广告 + 50 余条小程序去广告 |
 | `script_fixes.txt` | **④ 失效脚本地址修复表**：上游脚本被删/换目录时，重定向到可用镜像或丢弃，直接消灭 QX 的「N 个问题存在于子资源」 |
@@ -89,7 +89,7 @@ https://raw.githubusercontent.com/314235678/quantumult-adblock/main/rewrite.list
 
 1. **Quantumult X 自带**：订阅上的 `update-interval` 会让客户端按周期重新拉取 `adblock.list` / `rewrite.list`，无需你手动操作。
 2. **清单内容也会变新**：`.github/workflows/update.yml` 会在两种情况下自动重建：
-   - **定时**：每天北京时间 00:00 跑一次，重新抓取全部上游（AdGuard 每日更新广告域名，blackmatrix7 / 217heidai / 墨鱼也在持续维护）；
+   - **定时**：每天北京时间 00:00 跑一次，重新抓取全部上游（AdGuard 每日更新广告域名，blackmatrix7 / 墨鱼也在持续维护）；
    - **规则源变更时**：改过 `custom.txt` / `sources.txt` / `rewrite_sources.txt` / `wechat_rewrite.conf` / `build.py` 并 push，立刻重建（生成产物本身不在触发列表里，不会自激循环）。
 3. **先校验再提交**：重建后 `verify.py` 会检查数量下限、语法合法性、私有 IP 段、过宽关键词、规则冲突、HTML 污染。
    **任何一项不通过就中断，不会把坏清单推给你**——这是防止上游集体抽风时订阅变空的关键一环。
@@ -334,6 +334,46 @@ URL | types=HOST,HOST-KEYWORD
 1. 订阅更新失败时，先停用**域名层**（`[rule_remote]` 那条），不要只停重写层 —— 主因通常在分流。
 2. 打开 QX → 引用 → 找到报错的资源 → 长按复制链接，看它的域名是否在你订阅的规则里被 `REJECT`。
 3. 若用的是本仓库，直接看 Actions 里最近一次的 `verify.py` 输出，`[信息]` 行会打印「被域名层拦截的脚本托管域名数」，正常应为 0。
+
+---
+
+## 十一之二、事故记录：2068 条整域误封（"软件打不开 + 网络没网"）
+
+**现象**：部分 App 打不开或白屏，淘宝/天猫图片全白，苹果服务异常，不少海外 App 提示网络错误；
+同时广告过滤效果反而下降。
+
+**根因**：`build.py` 的 AdGuard 转换只把 `rest.startswith("/")` 判定为路径级规则，
+而清单里的精细规则实际写成两种形式：
+
+| 写法 | 真实语义 | 旧代码判定 |
+|---|---|---|
+| `\|\|baidu.com^*/app/banner_` | 只封这个路径 | `rest = "^*..."` → **当成整域** |
+| `\|\|alicdn.com^$domain=a.com\|b.com` | 只在这些网站生效 | `rest = "^$domain=..."` → **当成整域** |
+
+于是生成了 `HOST-SUFFIX,alicdn.com` / `taobao.com` / `tmall.com` / `baidu.com` /
+`apple.com` / `googleapis.com` / `amazonaws.com` / `126.net` / `sinaimg.cn` 等整域封禁。
+
+**量化**：`217heidai` 源 15658 条可解析规则里，真正的整域规则只有 22 条，
+15636 条是路径级/条件级；其中 2068 个域名被误升级后进了产物，占清单 10.5%。
+这个源对 QX 规则格式而言是**净负贡献**（收益 22 条，代价 2068 条误封），已从 `sources.txt` 停用。
+
+**修复**：
+1. AdGuard 转换只接受「裸域名」和「裸域名 + `^`」两种写法，其余一律丢弃并计数；
+2. 停用 217heidai 源；
+3. `allowlist.txt` 放行全部 HTTPDNS / DoH / 私有 DNS 通道（50 个）——
+   封解析通道对去广告零收益（QX 按域名/SNI 命中，不按 IP），代价却是 App 拿不到 IP；
+4. MitM 剔除 48 类银行 / 支付 / 政务核心域（证书固定会让 App 直接连不上；
+   但 `adv.ccb.com`、`ad.12306.cn` 这类本身就是广告主机的继续保留）；
+5. 144 个 URL 模式里的裸 `reject`（直接断连）让位给 `reject-dict` / `reject-200`
+   （返回合法空响应），避免 App 判定网络异常后走降级重试、转而加载备用广告接口；
+6. `verify.py` 新增**回归测试**：喂 4 条典型精细规则给 `parse_line`，只要产出任何规则就判定构建失败；
+   另加基础域兜底清单（60 个），这 60 个域一旦被整域拒绝直接报错。
+
+**自己怎么防**：打开 Actions 最近一次 `verify.py` 输出，这两行必须是 0：
+```
+[信息] AdGuard 转换回归测试: 精细规则误升级 0 条，整域规则识别 正常
+[信息] 基础域整域封禁: 0 个（应为 0）
+```
 
 ---
 

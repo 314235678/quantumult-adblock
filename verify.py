@@ -262,9 +262,18 @@ if B.ALLOW_FULL:
         parts = l.split(",")
         if len(parts) < 2:
             continue
+        kind = parts[0]
         val = parts[1].strip().lower()
-        if any(val == a or val.endswith("." + a) or (len(val) >= 4 and val in a)
-               for a in B.ALLOW_FULL):
+        # 两种规则语义不同，判定也必须分开：
+        #   HOST-SUFFIX 是「该域及其子域」，只有 val == 豁免域 或 val 是豁免域的子域
+        #     才算泄漏。不能用子串判断 —— 例如豁免了 httpdns.browser.miui.com，
+        #     子串判定会误报 HOST-SUFFIX,browser.miui.com（那是另一个域，不是泄漏）。
+        #   HOST-KEYWORD 是子串匹配，关键词落在豁免域内部才会连带打穿，用子串判断。
+        if kind == "HOST-KEYWORD":
+            hit = any(len(val) >= 4 and val in a for a in B.ALLOW_FULL)
+        else:
+            hit = any(val == a or val.endswith("." + a) for a in B.ALLOW_FULL)
+        if hit:
             allow_hit.append(l)
     if allow_hit:
         err(f"域名层仍在拦功能豁免域名，对应 App 会表现为「没网」: {allow_hit[:5]}")
@@ -278,7 +287,75 @@ if B.ALLOW_FULL:
     print(f"[信息] 功能豁免域名 {len(B.ALLOW_FULL)} 个（完全）+ {len(B.ALLOW_MITM)} 个（仅 MitM），"
           f"泄漏到产物里的: {len(allow_hit) + len(allow_mitm)} 个")
 
+# ---------------- 整域误封回归：本项目最严重的一次事故 ----------------
+# 2026-11：build.py 的 AdGuard 转换只把「/ 开头」当路径规则，而清单里的精细
+# 规则普遍写成 ^*/path 或 ^$domain=a|b，于是被当成整域规则，生成了
+# HOST-SUFFIX,alicdn.com / baidu.com / taobao.com / apple.com / googleapis.com
+# / amazonaws.com 等 2068 条整域封禁（占清单 10.5%），后果是淘宝白屏、
+# 苹果服务异常、大量海外 App 后端全断，用户侧表现为"软件打不开 / 网络没网"。
+#
+# 这一段既是回归测试（喂几条精细规则给 parse_line，不许产出任何规则），
+# 也是产物兜底（这些基础域一旦被整域拒绝，对应服务必定不可用）。
+
+_probe = [
+    ("||alicdn.com^$domain=aa.com|bb.com", "条件级规则，只对指定站点生效"),
+    ("||baidu.com^*/app/banner_", "路径级规则，^ 后接路径"),
+    ("||example.com/ads/banner.js", "路径级规则，直接接路径"),
+    ("||apple.com^$ping,xmlhttprequest,domain=apple.com", "带 $ 修饰符"),
+]
+_parse_bad = []
+for _rule, _desc in _probe:
+    _before = set(B.rules)
+    B.parse_line(_rule)
+    _added = sorted(set(B.rules) - _before)
+    if _added:
+        _parse_bad.append(f"{_rule}（{_desc}）被错误转成 {_added}")
+    for _k in _added:
+        del B.rules[_k]
+if _parse_bad:
+    err("AdGuard 精细规则被误升级成整域封禁（会整站打不开/没网），"
+        "parse_line 的路径与 $ 修饰符判定失效: " + " | ".join(_parse_bad[:3]))
+
+# 阳性对照：真正的整域规则必须照常收下，否则上面的检查等于没测
+_before = set(B.rules)
+B.parse_line("||probe-should-keep.com^")
+_kept = sorted(set(B.rules) - _before)
+for _k in _kept:
+    del B.rules[_k]
+if not _kept:
+    err("整域规则 ||probe-should-keep.com^ 未被收下，AdGuard 转换整体失效（清单会变空）")
+print(f"[信息] AdGuard 转换回归测试: 精细规则误升级 {len(_parse_bad)} 条，"
+      f"整域规则识别 {'正常' if _kept else '失效'}")
+
+# 基础域兜底：这些域是「一整家服务」的根，被整域拒绝就等于该服务下线
+ESSENTIAL_BASE = {
+    "apple.com", "icloud.com", "googleapis.com", "gstatic.com", "google.com",
+    "amazonaws.com", "akamaihd.net", "akamai.net", "cloudfront.net", "cloudflare.com",
+    "alicdn.com", "aliyuncs.com", "alipay.com", "alipayobjects.com", "taobao.com",
+    "tmall.com", "alibaba.com", "baidu.com", "bdstatic.com", "qq.com",
+    "weixin.qq.com", "tencent.com", "gtimg.com", "myqcloud.com", "bytedance.com",
+    "snssdk.com", "toutiao.com", "byteimg.com", "douyin.com", "bilibili.com",
+    "hdslb.com", "weibo.com", "sinaimg.cn", "zhihu.com", "xiaohongshu.com",
+    "xhscdn.com", "kuaishou.com", "jd.com", "360buyimg.com", "pinduoduo.com",
+    "meituan.com", "dianping.com", "126.net", "127.net", "netease.com",
+    "microsoft.com", "windowsupdate.com", "mi.com", "xiaomi.com", "huawei.com",
+    "github.com", "githubusercontent.com", "jsdelivr.net",
+}
+essential_hit = []
+for l in lines:
+    if not l.startswith("HOST-SUFFIX,"):
+        continue
+    d = l.split(",")[1].strip().lower()
+    if d in ESSENTIAL_BASE:
+        essential_hit.append(d)
+if essential_hit:
+    err(f"{len(essential_hit)} 个基础域被整域拒绝，对应服务会整体不可用"
+        f"（典型的「软件打不开 / 网络没网」）: {sorted(set(essential_hit))}")
+print(f"[信息] 基础域整域封禁: {len(essential_hit)} 个（应为 0）")
+
 # HOST-KEYWORD 写成完整域名是典型的同域打穿，必须降级为 HOST-SUFFIX。
+
+
 # 注意：只判定「语法上就是完整域名」的关键词。
 #   -logging.nextmedia.com / a8clk. / .estream. 这类带前后缀锚点的关键词
 #   本身不是域名（前缀短横线表示"以某串结尾"，尾部点表示"以某串开头"），

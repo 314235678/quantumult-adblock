@@ -31,9 +31,16 @@ https://raw.githubusercontent.com/AdguardTeam/AdguardFilters/master/BaseFilter/s
 # types=HOST,HOST-KEYWORD,HOST-SUFFIX，但请先想清楚要不要 11 MB 的规则。
 https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/QuantumultX/Advertising/Advertising.list | types=HOST,HOST-KEYWORD
 
-# ---------- 3. 217heidai 广告过滤规则（AdGuard 格式）----------
-# 由多份国际清单合成，更新频繁，对境外广告 SDK 覆盖较好，与第 2 项互补。
-https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt
+# ---------- 3. 217heidai 广告过滤规则（AdGuard 格式）—— 已于 2026-11 停用 ----------
+# 停用原因：这是一份「精细化 AdGuard 规则」清单，绝大部分条目是路径级
+# （||x.com^*/ads/banner）或带生效条件（||x.com^$domain=a.com|b.com），
+# 它们描述的是"在某个网站的某个路径下屏蔽"，本来就无法降维成 QX 的整域规则。
+# 实测该源 15658 条可解析规则里，真正的整域规则只有 22 条；硬转的结果是
+# 15636 条被误升级成整域封禁，其中包括 alicdn.com / baidu.com / taobao.com /
+# tmall.com / apple.com / googleapis.com / amazonaws.com —— 淘宝白屏、
+# 苹果服务异常、大量海外 App 后端全断，全都由它造成。
+# 换句话说：对 QX 规则格式而言这个源是净负贡献，收益 22 条、代价 2068 条误封。
+# https://raw.githubusercontent.com/217heidai/adblockfilters/main/rules/adblockfilters.txt
 
 # ---------- 4. Apple 广告/追踪专用清单 ----------
 https://raw.githubusercontent.com/froggeric/DNS-blocklists/main/NoAppleAds

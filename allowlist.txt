@@ -29,6 +29,70 @@ jd.com
 360buyimg.com
 3.cn
 
+# ---------- DNS / DoH / HTTPDNS 解析通道（2026-11 全量放行）----------
+# 事故现象：部分 App 表现为"有信号但没网 / 一直加载不出来"。
+# 根因：上游广告清单把各大 App 的私有 DNS 通道（httpdns.* / doh.* / dns.*）
+#       也当成广告域收进来了，域名层一拒绝，App 就连 IP 都拿不到 ——
+#       因为它是用这条通道解析自己的业务域名的，不是用来解析广告域名的。
+#
+# 关键判断：Quantumult X 是按请求里的域名 / SNI 命中的，不按 IP。
+#   所以就算 App 走 HTTPDNS 拿到真实 IP，只要目标域名在拒绝清单里，照样被拦。
+#   换句话说：封 DNS 解析通道对去广告的收益约等于 0，
+#   而代价是整条网络链路瘫痪。这笔账只能这么算。
+#
+# 微信 / 微博 / 飞书 / 爱奇艺 / 优酷 / 百度 / 阿里 / 美团 / 网易云 / 腾讯 /
+# 华为 / 小米 / OPPO / vivo / 金银岛等，全部放行。
+aedns.weixin.qq.com
+api.cupid.dns.iqiyi.com
+apidns.kwd.inkuai.com
+dns.m.sm.cn
+dns.wechat.com
+dns.weibo.cn
+dns.weixin.qq.com
+dns.weixin.qq.com.cn
+dns.ximalaya.com
+doh.iqiyi.com
+doh.ptqy.gitv.tv
+doh.zjurl.cn
+hdns.ksyun.com
+httpsdns.baidu.com
+ttnet-doh.feishu.cn
+httpdns-api.aliyuncs.com
+httpdns-sc.aliyuncs.com
+httpdns.alicdn.com
+httpdns.baidu.com
+httpdns.baidubce.com
+httpdns.bcelive.com
+httpdns.browser.miui.com
+httpdns.c.cdnhwc2.com
+httpdns.calorietech.com
+httpdns.cctv.com
+httpdns.danuoyi.tbcache.com
+httpdns.gslb.yy.com
+httpdns-v6.gslb.yy.com
+union-httpdns.gslb.yy.com
+yyapp-httpdns.gslb.yy.com
+httpdns.huaweicloud.com
+httpdns.kg.qq.com
+httpdns.kwd.inkuai.com
+httpdns.meituan.com
+httpdnsvip.meituan.com
+httpdns.music.163.com
+httpdns-sdk.n.netease.com
+httpdns.volcengineapi.com
+httpdns.volces.com
+httpdns.yunxindns.com
+httpdns.zybang.com
+httpdns.platform.dbankcloud.com
+httpdns-browser.platform.dbankcloud.cn
+httpdns1.cc.cdnhwc5.com
+httpdns.ocloud.heytapmobi.com
+httpdns.ocloud.oppomobile.com
+httpdns.push.heytapmobi.com
+httpdns-push.heytapmobile.com
+httpdns-ocloud.heytapmobile.com
+httpdns-euex-push.heytapmobile.com
+
 # ---------- 其他同域高危（示例，按需解除注释）----------
 # 判定方法：某 App 开启订阅后突然"没网"，但关掉订阅就好了 —— 八成是这类问题。
 # 把它主域加到这里，重跑 build.py 即可。

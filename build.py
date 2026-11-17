@@ -116,6 +116,44 @@ def _is_subscription_infra(h: str) -> bool:
     return any(h == a or h.endswith("." + a) for a in SUBSCRIPTION_INFRA)
 
 
+# ---------------- MitM 高危主体：银行 / 支付 / 政务 ----------------
+# 2026-11 事故：重写层的 hostname 累计到 1200 个，其中 76 个是银行、支付、
+# 政务、12306 的核心业务域（creditcardapp.bankcomm.com、elife.icbc.com.cn、
+# intellicc.bas.cmbchina.com、imcs.citicbank.com、fuwu.nhsa.gov.cn、122.gov.cn…）。
+# 这类 App 普遍做了证书固定（SSL Pinning），被中间人解密后直接拒绝连接，
+# 手机上的表现就是"这个 App 打不开 / 一直转圈 / 网络异常"，
+# 而界面上查不到任何 reject 规则 —— 用户几乎不可能自己定位到这。
+#
+# 取舍：宁可这些 App 里的小广告拦不掉，也不能让 App 本身打不开。
+# 例外：命中敏感词但自身明显是广告子域的（adv.ccb.com、ad.12306.cn、
+# ad.ysepay.com），继续保留 MitM —— 它们不承载业务，风险极低。
+MITM_SENSITIVE = (
+    "bankcomm", ".ccb.com", "icbc", "abchina", "boc.cn", "bankofchina",
+    "cmbchina", "citicbank", "ecitic", "bankofbeijing", "jlbank", "z-bank",
+    "spdb", "psbc", "cgbchina", "cgbank", "aibank", "cebbank", "grcbank",
+    "jsbchina", "nbcb", "bankofshanghai", ".hxb.com",
+    "tenpay", "alipay", "unionpay", "ysepay", "waitwaitpay", "95598",
+    "51credit", "shenzhentong", "12306", ".gov.cn",
+)
+
+# 判断某个主机名「本身就是广告主机」：首段或中间某段就是广告词。
+_AD_HOST_RE = re.compile(
+    r"(?:^|[.\-])(?:ad|ads|adv|adx|adim|adservice|advert\w*|adsense|log|logs"
+    r"|stat|stats|track|tracker|monitor|analytics|beacon|report|click"
+    r"|pingback|metrics)(?:[.\-]|$)",
+    re.I,
+)
+
+
+def _is_mitm_sensitive(h: str) -> bool:
+    """该主机名是否属于「做 MitM 会害得 App 打不开」的高危业务域。"""
+    low = h.strip().lower().lstrip("*.")
+    if not any(k in low for k in MITM_SENSITIVE):
+        return False
+    # 自身是明显的广告主机，放行（去掉通配前缀后再判断一次）
+    return not _AD_HOST_RE.search(low)
+
+
 # ---------------- 功能豁免层（allowlist.txt）----------------
 # 与 CRITICAL_ALLOW 的区别：
 #   CRITICAL_ALLOW 保护的是"项目自身能不能更新"（GitHub / jsDelivr 等基础设施）；
@@ -124,6 +162,8 @@ def _is_subscription_infra(h: str) -> bool:
 ALLOW_FULL = set()   # 完全豁免：域名拒绝层与 MitM 都不碰
 ALLOW_MITM = set()   # 仅豁免 MitM：域名层仍可拒绝，但不做中间人解密
 allow_stat = {"full": 0, "mitm": 0, "blocked": []}
+# 从 MitM 里剔掉的高危业务域（银行/支付/政务），仅用于构建日志
+mitm_sensitive_stat = []
 
 
 def load_allowlist():
@@ -176,7 +216,7 @@ CURRENT_SOURCE = "custom.txt"
 rules = {}  # 去重后的规则行 -> 来源标签
 dropped_keywords = []  # 被安全阀拦下的关键词（用于构建日志）
 ip_stat = {"skipped_private": 0, "skipped_broad": 0}  # IP 规则安全阀统计
-path_stat = {"skipped_path_rule": 0}  # 因带路径无法表达而丢弃的规则数
+path_stat = {"skipped_path_rule": 0, "skipped_modifier_rule": 0}
 allow_hits = []  # 被基础设施白名单拦下的域名（用于构建日志）
 ip_rules = set()  # IP-CIDR 规则单独存，不进主包
 # 按源限制可接受的规则类型（sources.txt 里用 `| types=HOST,HOST-KEYWORD` 指定）。
@@ -420,8 +460,29 @@ def parse_line(line: str):
             m = re.match(r"^\|\|([^/^\*]+)(.*)$", s)
         if m:
             host, rest = m.group(1), m.group(2)
-            if rest.startswith("/"):
-                path_stat["skipped_path_rule"] += 1
+            # 只有「裸域名」或「裸域名 + 结尾分隔符 ^」才是真正的整域规则。
+            #   ||example.com            rest = ""
+            #   ||example.com^           rest = "^"
+            # 其余全都不表达「整域」，一律丢弃：
+            #   ||example.com/ads/x      路径级
+            #   ||example.com^*/banner   路径级（^ 后跟 * 或 /）
+            #   ||example.com^$domain=a|b  仅对 a、b 生效的条件规则
+            #
+            # 2026-11 事故：旧代码只判断 rest 是否以 "/" 开头。而 AdGuard 清单里
+            # 路径规则绝大多数写成 "^*..."、"^/..."，条件规则写成 "^$domain=..."，
+            # 这些都以 "^" 开头，判断落空后被当成整域规则 → 生成了
+            # HOST-SUFFIX,alicdn.com,REJECT / baidu.com / apple.com / amazonaws.com
+            # / googleapis.com / taobao.com / tmall.com 这类整域封禁，
+            # 表现就是淘宝白屏、苹果服务异常、海外 App 后端全部连不上（"没网"）。
+            # 217heidai 源 15658 条可解析规则里，真正的整域规则只有 22 条，
+            # 其余 15636 条全被这样误升级成了整域封禁。
+            if rest not in ("", "^"):
+                if rest.startswith("$") or "$" in rest:
+                    path_stat["skipped_modifier_rule"] = (
+                        path_stat.get("skipped_modifier_rule", 0) + 1
+                    )
+                else:
+                    path_stat["skipped_path_rule"] += 1
                 return
             add_host_suffix(host)
         return
@@ -758,6 +819,14 @@ def build_rewrite():
                     removed = [h for h in hosts if _needs_mitm_exempt(h)]
                     print(f"[豁免] {label}: hostname 去掉功能豁免域名 {removed}")
                     allow_stat["mitm"] += len(removed)
+                # MitM 高危主体（银行/支付/政务）：证书固定会让 App 直接连不上，
+                # 见 MITM_SENSITIVE 的说明。这里整批剔出 MitM，域名层不受影响。
+                before = len(safe)
+                safe = [h for h in safe if not _is_mitm_sensitive(h)]
+                if len(safe) != before:
+                    removed = [h for h in hosts if _is_mitm_sensitive(h)]
+                    print(f"[MitM] {label}: 剔除高危业务域（证书固定风险） {removed}")
+                    mitm_sensitive_stat.extend(removed)
                 if not safe:
                     continue
                 s = "hostname = " + ", ".join(safe)
@@ -784,6 +853,22 @@ def build_rewrite():
         if (acts & SCRIPT_ACTIONS) and (acts & REJECT_ACTIONS)
     }
 
+    # 同一 URL 在多个源里被写成不同 reject 变体时的裁决：
+    # 裸 `reject` 在 QX 里是「直接断连」，客户端收到的是连接被重置；
+    # 而 reject-dict / reject-200 / reject-array / reject-img 都返回一个
+    # 语法合法的空响应。对返回 JSON 的接口来说，断连会让 App 判定网络异常、
+    # 走降级重试甚至切到备用广告接口 —— 表现是白屏卡住、广告反而出来了。
+    #
+    # 2026-11 实测：3125 条规则里有 150 个 URL 模式存在动作冲突，
+    # 其中 minipro.95504.net、api.gotokeep.com、aag.enmonster.com 等都是
+    # 裸 reject 排在前面抢走了本该 reject-dict 的接口。
+    # 裁决：只要该模式存在更"温和"的写法，一律丢弃裸 reject。
+    SOFT_REJECT = {"reject-dict", "reject-array", "reject-200", "reject-img"}
+    reject_soften = {
+        pat for pat, acts in prec.items()
+        if "reject" in acts and (acts & SOFT_REJECT)
+    }
+
     blocks = []
     seen = set()
     total = 0
@@ -796,6 +881,9 @@ def build_rewrite():
             is_rule = not s.startswith("#") and not re.match(r"^hostname\s*=", s, re.I)
             if is_rule and _action(s) in REJECT_ACTIONS and _pattern(s) in script_wins:
                 print(f"[裁决] {label}: 整条拒绝让位给脚本规则 -> {s[:90]}")
+                continue
+            if is_rule and _action(s) == "reject" and _pattern(s) in reject_soften:
+                print(f"[裁决] {label}: 裸 reject 让位给温和拒绝（保接口可用）-> {s[:90]}")
                 continue
             out.append(s)
         if out:
@@ -814,6 +902,9 @@ def build_rewrite():
                   f"丢弃 {fix_stat['dropped']} 条（无可用镜像）")
         if script_wins:
             print(f"[裁决] 共 {len(script_wins)} 个 URL 模式按「脚本优先于整条拒绝」处理")
+        if reject_soften:
+            print(f"[裁决] 共 {len(reject_soften)} 个 URL 模式丢弃裸 reject，"
+                  f"改由 reject-dict/reject-200 等温和拒绝兜底（避免 App 连接被重置）")
 
 
 def _write_list(path: str, rules_list, title: str, desc: str):
@@ -901,13 +992,18 @@ def main():
         uniq = sorted(set(allow_stat["blocked"]))
         print(f"[豁免] 功能豁免拦截 {allow_stat['full']} 次、{len(uniq)} 个域名"
               f"（上游想封业务域名，已放行）: {', '.join(uniq[:15])}")
+    if mitm_sensitive_stat:
+        uniq = sorted(set(mitm_sensitive_stat))
+        print(f"[MitM] 共剔除 {len(mitm_sensitive_stat)} 次、{len(uniq)} 个银行/支付/政务高危域"
+              f"（避免证书固定导致 App 打不开）: {', '.join(uniq[:15])}")
     print(f"[安全阀] IP 规则: 跳过私有/保留段 {ip_stat['skipped_private']} 条, "
           f"跳过过大网段 {ip_stat['skipped_broad']} 条")
     if type_stat["skipped_by_filter"]:
         print(f"[安全阀] 按 sources.txt 的 types 过滤跳过 {type_stat['skipped_by_filter']} 条"
               f"（源头限流，防止巨无霸清单把规则数顶到 10 万+）")
-    print(f"[安全阀] 带路径的 AdGuard 规则（域名层无法表达，已丢弃）: "
-          f"{path_stat['skipped_path_rule']} 条")
+    print(f"[安全阀] 带路径/条件的 AdGuard 规则（域名层无法表达，已丢弃）: "
+          f"路径 {path_stat['skipped_path_rule']} 条, "
+          f"带 $ 修饰符 {path_stat['skipped_modifier_rule']} 条")
 
 
 if __name__ == "__main__":
